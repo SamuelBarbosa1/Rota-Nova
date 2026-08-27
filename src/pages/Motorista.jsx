@@ -28,8 +28,45 @@ export default function Motorista() {
 
   // Interview Quiz State
   const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
+  const [quizError, setQuizError] = useState('');
+  const [quizFailed, setQuizFailed] = useState(null); // null | { score, correctCount, totalCount }
+
+  const handleQuizSubmit = () => {
+    const answeredKeys = Object.keys(quizAnswers);
+    if (answeredKeys.length < questions.length) {
+      setQuizError(`Atenção: Por favor, selecione uma resposta para todas as ${questions.length} perguntas antes de enviar. (${answeredKeys.length}/${questions.length} respondidas)`);
+      return;
+    }
+    setQuizError('');
+
+    let correctCount = 0;
+    questions.forEach(q => {
+      const selected = quizAnswers[q.id];
+      const correctOpt = q.options.find(o => o.correct);
+      if (selected === correctOpt?.key) {
+        correctCount += 1;
+      }
+    });
+
+    const calculatedScore = Math.round((correctCount / questions.length) * 100);
+
+    if (calculatedScore >= 75) {
+      setQuizFailed(null);
+      completeInterview(calculatedScore);
+    } else {
+      setQuizFailed({
+        score: calculatedScore,
+        correctCount,
+        totalCount: questions.length
+      });
+    }
+  };
+
+  const handleRetryQuiz = () => {
+    setQuizAnswers({});
+    setQuizFailed(null);
+    setQuizError('');
+  };
 
   const questions = [
     {
@@ -455,7 +492,7 @@ export default function Motorista() {
               </h3>
               <p className="text-xs text-slate-400 mt-1">
                 {currentUser.driverData?.interviewPassed 
-                  ? 'Sua avaliação de conduta foi concluída com aprovação máxima.' 
+                  ? 'Sua avaliação de conduta foi concluída e aprovada.' 
                   : 'Responda o questionário obrigatório abaixo para liberar seu credenciamento e começar a aceitar corridas.'}
               </p>
             </div>
@@ -466,15 +503,36 @@ export default function Motorista() {
                   <Award className="w-8 h-8 text-amber-400" />
                   <div>
                     <h4 className="text-lg font-black text-white">Certificado de Aprovação de Conduta Rota Nova!</h4>
-                    <p className="text-xs text-slate-300">Nota Obtida: 100/100 • Validade: Ativa</p>
+                    <p className="text-xs text-slate-300">Nota Obtida: {currentUser.driverData?.interviewScore || 100}/100 • Validade: Ativa (Condutor Credenciado)</p>
                   </div>
                 </div>
               </div>
+            ) : quizFailed ? (
+              <div className="bg-rose-950/80 border border-rose-500/60 p-6 rounded-2xl space-y-4 text-center">
+                <AlertCircle className="w-12 h-12 text-rose-400 mx-auto" />
+                <h4 className="text-xl font-black text-white">REPROVADO NA ENTREVISTA DE CONDUTA</h4>
+                <p className="text-3xl font-black text-rose-400">Nota: {quizFailed.score}/100</p>
+                <p className="text-xs text-slate-300 max-w-lg mx-auto">
+                  Você acertou <strong>{quizFailed.correctCount} de {quizFailed.totalCount}</strong> perguntas. O Rota Nova! exige pontuação mínima de <strong>75/100</strong> para credenciar o motorista parceiro e liberar a aceitação de corridas.
+                </p>
+                <button
+                  onClick={handleRetryQuiz}
+                  className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-3 rounded-xl text-xs shadow-lg transition-colors"
+                >
+                  Refazer Questionário de Conduta
+                </button>
+              </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-rose-950/40 border border-rose-500/40 p-4 rounded-2xl text-xs text-rose-300 font-medium">
-                  ⚠️ <strong>Atenção novo condutor:</strong> Para poder aceitar chamadas de passageiros no Rota Nova!, você precisa realizar a entrevista de regulamento de conduta abaixo.
+                <div className="bg-amber-950/40 border border-amber-500/40 p-4 rounded-2xl text-xs text-amber-300 font-medium">
+                  ⚠️ <strong>Atenção novo condutor:</strong> Para poder aceitar chamadas de passageiros no Rota Nova!, você precisa responder corretamente às perguntas abaixo. Nota mínima para aprovação: 75/100.
                 </div>
+
+                {quizError && (
+                  <div className="bg-rose-950/80 border border-rose-500 text-rose-300 p-4 rounded-xl text-xs font-bold animate-bounce-subtle">
+                    {quizError}
+                  </div>
+                )}
 
                 <div className="space-y-6">
                   {questions.map((q) => (
@@ -490,10 +548,13 @@ export default function Motorista() {
                               name={`q_${q.id}`}
                               value={opt.key}
                               checked={quizAnswers[q.id] === opt.key}
-                              onChange={() => setQuizAnswers({...quizAnswers, [q.id]: opt.key})}
+                              onChange={() => {
+                                setQuizAnswers({...quizAnswers, [q.id]: opt.key});
+                                setQuizError('');
+                              }}
                               className="accent-amber-500"
                             />
-                            <span>{opt.text}</span>
+                            <span><strong>({opt.key})</strong> {opt.text}</span>
                           </label>
                         ))}
                       </div>
@@ -501,13 +562,11 @@ export default function Motorista() {
                   ))}
 
                   <button
-                    onClick={() => {
-                      completeInterview(100);
-                    }}
+                    onClick={handleQuizSubmit}
                     className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-lg transition-all text-sm flex items-center justify-center space-x-2"
                   >
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>Concluir Entrevista e Emitir Credenciamento</span>
+                    <span>Enviar Respostas e Avaliar Credenciamento</span>
                   </button>
                 </div>
               </div>
