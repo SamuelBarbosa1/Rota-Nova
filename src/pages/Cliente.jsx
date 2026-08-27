@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import { 
@@ -14,8 +14,8 @@ export default function Cliente() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Ride Request state
-  const [origin, setOrigin] = useState('Av. Paulista, 1000 — SP');
-  const [destination, setDestination] = useState('Rua dos Ipês, 28 (Estrada de Chão)');
+  const [origin, setOrigin] = useState('Eixo Monumental, Bloco A — Brasília, DF');
+  const [destination, setDestination] = useState('Sol Nascente, Trecho 3, Chácara 28 (Estrada de Chão) — DF');
   const [selectedCategory, setSelectedCategory] = useState('pop');
   const [paymentMethod, setPaymentMethod] = useState('pix');
 
@@ -26,56 +26,67 @@ export default function Cliente() {
   const [ratingComment, setRatingComment] = useState('');
 
   // Favorites
-  const [favorites, setFavorites] = useState([
-    { id: 1, name: 'Casa', address: 'Rua dos Ipês, 28 (Estrada de Chão)' },
-    { id: 2, name: 'Trabalho', address: 'Av. Paulista, 1000 — SP' },
-    { id: 3, name: 'Academia', address: 'Av. Brigadeiro Faria Lima, 500' }
-  ]);
+  const [favorites, setFavorites] = useState(() => currentUser?.stats?.savedLocations || []);
   const [newFavName, setNewFavName] = useState('');
   const [newFavAddress, setNewFavAddress] = useState('');
 
   // History state
-  const [tripHistory, setTripHistory] = useState([
-    {
-      id: 'ROT-9041',
-      date: 'Hoje às 18:30',
-      origin: 'Av. Paulista, 1000',
-      destination: 'Rua dos Ipês, 28 (Estrada de Chão)',
-      price: 24.50,
-      driver: 'Carlos Eduardo (Toyota Corolla)',
-      category: 'RotaJá Pop',
-      status: 'Concluída'
-    },
-    {
-      id: 'ROT-8849',
-      date: '26/08/2026 às 19:40',
-      origin: 'Estação Luz — Centro',
-      destination: 'Estrada do Jaraguá, 102 (Rua de Terra)',
-      price: 28.90,
-      driver: 'Marcos Vinicius (Toyota Etios)',
-      category: 'RotaJá Comfort',
-      status: 'Concluída'
+  const [tripHistory, setTripHistory] = useState(() => currentUser?.stats?.tripHistory || []);
+
+  useEffect(() => {
+    if (currentUser?.stats) {
+      setFavorites(currentUser.stats.savedLocations || []);
+      setTripHistory(currentUser.stats.tripHistory || []);
     }
-  ]);
+  }, [currentUser]);
+
+  const totalSpentCalculated = currentUser?.stats?.totalSpent !== undefined 
+    ? currentUser.stats.totalSpent 
+    : tripHistory.reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+
+  const popSpentCalculated = currentUser?.isDemo 
+    ? 290.00 
+    : tripHistory.filter(t => t.category?.includes('Pop')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+
+  const comfortSpentCalculated = currentUser?.isDemo 
+    ? 199.20 
+    : tripHistory.filter(t => t.category?.includes('Comfort')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+
+  const totalCatSpent = popSpentCalculated + comfortSpentCalculated;
+  const popPct = totalCatSpent > 0 ? Math.round((popSpentCalculated / totalCatSpent) * 100) : 0;
+  const comfortPct = totalCatSpent > 0 ? Math.round((comfortSpentCalculated / totalCatSpent) * 100) : 0;
+
+  const handleAddFavorite = (e) => {
+    e.preventDefault();
+    if (!newFavName || !newFavAddress) return;
+    const newFav = {
+      id: Date.now(),
+      name: newFavName,
+      address: newFavAddress
+    };
+    setFavorites(prev => [...prev, newFav]);
+    setNewFavName('');
+    setNewFavAddress('');
+  };
 
   const categories = [
     {
       id: 'pop',
-      name: 'RotaJá Pop',
+      name: 'Rota Nova! Pop',
       desc: 'Carros compactos e muito econômicos',
       price: 24.50,
       eta: '3 min'
     },
     {
       id: 'comfort',
-      name: 'RotaJá Comfort',
+      name: 'Rota Nova! Comfort',
       desc: 'Sedans novos com ar-condicionado reforçado',
       price: 31.90,
       eta: '2 min'
     },
     {
       id: 'xl',
-      name: 'RotaJá XL',
+      name: 'Rota Nova! XL',
       desc: 'Até 6 passageiros ou malas volumosas',
       price: 42.00,
       eta: '5 min'
@@ -89,12 +100,12 @@ export default function Cliente() {
         <div className="max-w-xl mx-auto px-4 text-center">
           <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-800 space-y-6 shadow-2xl">
             
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center">
               <Lock className="w-8 h-8" />
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Área Restrita do Passageiro</span>
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Área Restrita do Passageiro</span>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
                 Crie sua conta para acessar o Dashboard do Cliente
               </h2>
@@ -106,7 +117,7 @@ export default function Cliente() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={() => setAuthModalOpen(true)}
-                className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-emerald-500/20 text-sm transition-all flex items-center justify-center space-x-2"
+                className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 text-sm transition-all flex items-center justify-center space-x-2"
               >
                 <User className="w-4 h-4" />
                 <span>Criar Conta de Cliente</span>
@@ -158,7 +169,7 @@ export default function Cliente() {
         destination: destination,
         price: priceVal,
         driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
-        category: categories.find(c => c.id === selectedCategory)?.name || 'RotaJá Pop',
+        category: categories.find(c => c.id === selectedCategory)?.name || 'Rota Nova! Pop',
         status: 'Concluída'
       };
       setTripHistory(prev => [newTrip, ...prev]);
@@ -166,38 +177,28 @@ export default function Cliente() {
     }, 12000);
   };
 
-  const handleAddFavorite = (e) => {
-    e.preventDefault();
-    if (!newFavName || !newFavAddress) return;
-    setFavorites([...favorites, { id: Date.now(), name: newFavName, address: newFavAddress }]);
-    setNewFavName('');
-    setNewFavAddress('');
-  };
-
-  const totalSpentCalculated = tripHistory.reduce((acc, curr) => acc + (typeof curr.price === 'number' ? curr.price : 25), 0);
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 selection:bg-amber-500 selection:text-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* HEADER DO DASHBOARD DO CLIENTE (AUTENTICADO) */}
         <div className="glass-panel p-8 rounded-3xl border border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black text-2xl shadow-lg">
-              {currentUser.name.substring(0, 2).toUpperCase()}
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-black text-2xl shadow-lg">
+              {(currentUser?.name || 'CL').substring(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-950 border border-emerald-800 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-amber-400 bg-amber-950 border border-amber-800 px-2.5 py-0.5 rounded-full">
                   ✓ CLIENTE CADASTRADO & AUTENTICADO
                 </span>
               </div>
               <h1 className="text-3xl font-black text-white mt-1">
-                Dashboard do Cliente — {currentUser.name}
+                Dashboard do Cliente — {currentUser?.name || 'Cliente'}
               </h1>
               <p className="text-slate-400 text-xs mt-0.5">
-                {currentUser.email} • {currentUser.phone}
+                {currentUser?.email || ''} • {currentUser?.phone || ''}
               </p>
             </div>
           </div>
@@ -208,7 +209,7 @@ export default function Cliente() {
               onClick={() => setActiveTab('pedir')}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
                 activeTab === 'pedir'
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg'
+                  ? 'bg-amber-500 text-slate-950 shadow-lg'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -220,7 +221,7 @@ export default function Cliente() {
               onClick={() => setActiveTab('dash')}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
                 activeTab === 'dash'
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg'
+                  ? 'bg-amber-500 text-slate-950 shadow-lg'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -232,7 +233,7 @@ export default function Cliente() {
               onClick={() => setActiveTab('historico')}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
                 activeTab === 'historico'
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg'
+                  ? 'bg-amber-500 text-slate-950 shadow-lg'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -252,10 +253,10 @@ export default function Cliente() {
                 
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <Car className="w-5 h-5 text-emerald-400" />
-                    Solicitar Corrida RotaJá
+                    <Car className="w-5 h-5 text-amber-400" />
+                    Solicitar Corrida Rota Nova!
                   </h3>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-500/30">
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold border border-amber-500/30">
                     Sem cancelamento
                   </span>
                 </div>
@@ -288,10 +289,10 @@ export default function Cliente() {
                         value={origin}
                         onChange={(e) => setOrigin(e.target.value)}
                         disabled={rideStatus !== 'idle'}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
                         required
                       />
-                      <MapPin className="w-4 h-4 text-emerald-400 absolute left-3.5 top-3.5" />
+                      <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
                     </div>
                   </div>
 
@@ -303,7 +304,7 @@ export default function Cliente() {
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
                         disabled={rideStatus !== 'idle'}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
                         required
                       />
                       <Navigation className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
@@ -320,12 +321,12 @@ export default function Cliente() {
                           onClick={() => rideStatus === 'idle' && setSelectedCategory(cat.id)}
                           className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                             selectedCategory === cat.id
-                              ? 'bg-emerald-950/60 border-emerald-500 text-white'
+                              ? 'bg-amber-950/60 border-amber-500 text-white'
                               : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className={`p-2 rounded-lg ${selectedCategory === cat.id ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                            <div className={`p-2 rounded-lg ${selectedCategory === cat.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
                               <Car className="w-4 h-4" />
                             </div>
                             <div>
@@ -334,7 +335,7 @@ export default function Cliente() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-black text-emerald-400">R$ {cat.price.toFixed(2)}</p>
+                            <p className="text-sm font-black text-amber-400">R$ {cat.price.toFixed(2)}</p>
                             <p className="text-[10px] text-slate-400">{cat.eta}</p>
                           </div>
                         </div>
@@ -350,7 +351,7 @@ export default function Cliente() {
                         type="button"
                         onClick={() => setPaymentMethod('pix')}
                         className={`py-2 rounded-lg border transition-colors ${
-                          paymentMethod === 'pix' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-400'
+                          paymentMethod === 'pix' ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-slate-900 border-slate-800 text-slate-400'
                         }`}
                       >
                         PIX
@@ -359,7 +360,7 @@ export default function Cliente() {
                         type="button"
                         onClick={() => setPaymentMethod('cartao')}
                         className={`py-2 rounded-lg border transition-colors ${
-                          paymentMethod === 'cartao' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-400'
+                          paymentMethod === 'cartao' ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-slate-900 border-slate-800 text-slate-400'
                         }`}
                       >
                         Cartão
@@ -368,7 +369,7 @@ export default function Cliente() {
                         type="button"
                         onClick={() => setPaymentMethod('dinheiro')}
                         className={`py-2 rounded-lg border transition-colors ${
-                          paymentMethod === 'dinheiro' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-400'
+                          paymentMethod === 'dinheiro' ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-slate-900 border-slate-800 text-slate-400'
                         }`}
                       >
                         Dinheiro
@@ -379,10 +380,10 @@ export default function Cliente() {
                   {rideStatus === 'idle' ? (
                     <button
                       type="submit"
-                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-emerald-500/20 transition-all text-base flex items-center justify-center space-x-2"
+                      className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 transition-all text-base flex items-center justify-center space-x-2"
                     >
                       <Send className="w-5 h-5" />
-                      <span>Chamar Motorista RotaJá</span>
+                      <span>Chamar Motorista Rota Nova!</span>
                     </button>
                   ) : (
                     <button
@@ -413,13 +414,13 @@ export default function Cliente() {
 
               <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                  <ShieldCheck className="w-8 h-8 text-amber-400" />
                   <div>
-                    <h4 className="text-sm font-bold text-white">Garantia RotaJá sem Recusas</h4>
+                    <h4 className="text-sm font-bold text-white">Garantia Rota Nova! sem Recusas</h4>
                     <p className="text-xs text-slate-400">O motorista é obrigado a levar você até o endereço solicitado.</p>
                   </div>
                 </div>
-                <span className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-bold">
+                <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full font-bold">
                   Ativo 24h
                 </span>
               </div>
@@ -436,25 +437,31 @@ export default function Cliente() {
               
               <div className="glass-panel p-6 rounded-2xl border border-slate-800">
                 <p className="text-xs text-slate-400 font-semibold uppercase">Total Gasto em Corridas</p>
-                <p className="text-3xl font-black text-emerald-400 mt-2">R$ {totalSpentCalculated.toFixed(2)}</p>
+                <p className="text-3xl font-black text-amber-400 mt-2">R$ {totalSpentCalculated.toFixed(2)}</p>
                 <p className="text-[11px] text-slate-400 mt-1">Acumulado em {tripHistory.length} viagens</p>
               </div>
 
               <div className="glass-panel p-6 rounded-2xl border border-slate-800">
                 <p className="text-xs text-slate-400 font-semibold uppercase">Corridas Realizadas</p>
                 <p className="text-3xl font-black text-white mt-2">{tripHistory.length}</p>
-                <p className="text-[11px] text-emerald-400 mt-1">100% Concluídas sem cancelamento</p>
+                <p className="text-[11px] text-amber-400 mt-1">100% Concluídas sem cancelamento</p>
               </div>
 
               <div className="glass-panel p-6 rounded-2xl border border-slate-800">
                 <p className="text-xs text-slate-400 font-semibold uppercase">Sua Nota como Passageiro</p>
-                <p className="text-3xl font-black text-amber-400 mt-2">5.0 ★</p>
-                <p className="text-[11px] text-slate-400 mt-1">Excelente perfil avaliado</p>
+                <p className="text-3xl font-black text-amber-400 mt-2">
+                  {tripHistory.length > 0 ? `${currentUser?.stats?.ratingGiven || 5.0} ★` : (currentUser?.isDemo ? '4.95 ★' : 'Novo')}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {tripHistory.length > 0 || currentUser?.isDemo 
+                    ? 'Excelente perfil avaliado pelos motoristas' 
+                    : 'Nota atribuída após suas primeiras viagens'}
+                </p>
               </div>
 
               <div className="glass-panel p-6 rounded-2xl border border-slate-800">
                 <p className="text-xs text-slate-400 font-semibold uppercase">Locais Salvos</p>
-                <p className="text-3xl font-black text-teal-400 mt-2">{favorites.length}</p>
+                <p className="text-3xl font-black text-amber-400 mt-2">{favorites.length}</p>
                 <p className="text-[11px] text-slate-400 mt-1">Atalhos rápidos para pedido</p>
               </div>
 
@@ -464,28 +471,28 @@ export default function Cliente() {
               
               <div className="lg:col-span-6 glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-emerald-400" />
+                  <TrendingUp className="w-5 h-5 text-amber-400" />
                   Distribuição de Gastos por Categoria
                 </h3>
 
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>RotaJá Pop (Econômico)</span>
-                      <span>R$ 290,00 (60%)</span>
+                      <span>Rota Nova! Pop (Econômico)</span>
+                      <span>R$ {popSpentCalculated.toFixed(2).replace('.', ',')} ({popPct}%)</span>
                     </div>
                     <div className="w-full bg-slate-900 rounded-full h-3">
-                      <div className="bg-emerald-500 h-3 rounded-full" style={{ width: '60%' }}></div>
+                      <div className="bg-amber-500 h-3 rounded-full transition-all duration-500" style={{ width: `${popPct}%` }}></div>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>RotaJá Comfort (Sedan/SUV)</span>
-                      <span>R$ 199,20 (40%)</span>
+                      <span>Rota Nova! Comfort (Sedan/SUV)</span>
+                      <span>R$ {comfortSpentCalculated.toFixed(2).replace('.', ',')} ({comfortPct}%)</span>
                     </div>
                     <div className="w-full bg-slate-900 rounded-full h-3">
-                      <div className="bg-teal-400 h-3 rounded-full" style={{ width: '40%' }}></div>
+                      <div className="bg-amber-400 h-3 rounded-full transition-all duration-500" style={{ width: `${comfortPct}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -499,23 +506,27 @@ export default function Cliente() {
                 </h3>
 
                 <div className="space-y-3">
-                  {favorites.map((fav) => (
-                    <div key={fav.id} className="glass-card p-3.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-white">{fav.name}</p>
-                        <p className="text-slate-400 mt-0.5">{fav.address}</p>
+                  {favorites.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-4">Nenhum endereço favorito salvo ainda. Adicione um abaixo!</p>
+                  ) : (
+                    favorites.map((fav) => (
+                      <div key={fav.id} className="glass-card p-3.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-bold text-white">{fav.name}</p>
+                          <p className="text-slate-400 mt-0.5">{fav.address}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setDestination(fav.address);
+                            setActiveTab('pedir');
+                          }}
+                          className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold px-3 py-1.5 rounded-lg border border-amber-500/30 transition-colors"
+                        >
+                          Usar
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          setDestination(fav.address);
-                          setActiveTab('pedir');
-                        }}
-                        className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-colors"
-                      >
-                        Usar
-                      </button>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
 
                 <form onSubmit={handleAddFavorite} className="pt-3 border-t border-slate-800 space-y-3">
@@ -538,7 +549,7 @@ export default function Cliente() {
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-slate-800 text-emerald-400 font-bold py-2 rounded-xl text-xs border border-emerald-500/30 flex items-center justify-center space-x-1"
+                    className="w-full bg-slate-800 text-amber-400 font-bold py-2 rounded-xl text-xs border border-amber-500/30 flex items-center justify-center space-x-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Salvar Novo Local</span>
@@ -556,46 +567,54 @@ export default function Cliente() {
         {activeTab === 'historico' && (
           <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6 animate-fadeIn">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-emerald-400" />
+              <FileText className="w-5 h-5 text-amber-400" />
               Histórico de Viagens & Comprovantes
             </h3>
 
             <div className="space-y-4">
-              {tripHistory.map((trip) => (
-                <div key={trip.id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-3">
-                      <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-0.5 rounded border border-emerald-500/30">
-                        {trip.id}
-                      </span>
-                      <span className="text-xs text-slate-400">{trip.date} • {trip.category}</span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-sm text-slate-200 font-semibold flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        {trip.origin}
-                      </p>
-                      <p className="text-sm text-slate-200 font-semibold flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                        {trip.destination}
-                      </p>
-                    </div>
-
-                    <p className="text-xs text-slate-400">Motorista Parceiro: <strong className="text-slate-300">{trip.driver}</strong></p>
-                  </div>
-
-                  <div className="flex md:flex-col items-center md:items-end justify-between">
-                    <span className="text-xl font-black text-emerald-400">
-                      R$ {typeof trip.price === 'number' ? trip.price.toFixed(2) : trip.price}
-                    </span>
-                    <button className="text-xs text-emerald-400 hover:underline flex items-center gap-1 mt-1">
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Baixar Recibo PDF</span>
-                    </button>
-                  </div>
+              {tripHistory.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 space-y-3">
+                  <FileText className="w-12 h-12 mx-auto text-slate-700" />
+                  <p className="text-sm font-bold text-slate-300">Nenhuma corrida realizada ainda</p>
+                  <p className="text-xs text-slate-400">Solicite sua primeira viagem sem cancelamento na aba "Solicitar Viagem"!</p>
                 </div>
-              ))}
+              ) : (
+                tripHistory.map((trip) => (
+                  <div key={trip.id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-3">
+                        <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2.5 py-0.5 rounded border border-amber-500/30">
+                          {trip.id}
+                        </span>
+                        <span className="text-xs text-slate-400">{trip.date} • {trip.category}</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-sm text-slate-200 font-semibold flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                          {trip.origin}
+                        </p>
+                        <p className="text-sm text-slate-200 font-semibold flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                          {trip.destination}
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-slate-400">Motorista Parceiro: <strong className="text-slate-300">{trip.driver}</strong></p>
+                    </div>
+
+                    <div className="flex md:flex-col items-center md:items-end justify-between">
+                      <span className="text-xl font-black text-amber-400">
+                        R$ {typeof trip.price === 'number' ? trip.price.toFixed(2) : trip.price}
+                      </span>
+                      <button className="text-xs text-amber-400 hover:underline flex items-center gap-1 mt-1">
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Baixar Recibo PDF</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -604,8 +623,8 @@ export default function Cliente() {
 
       {showRatingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel max-w-md w-full p-6 rounded-3xl border border-emerald-500/40 text-center space-y-5">
-            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+          <div className="glass-panel max-w-md w-full p-6 rounded-3xl border border-amber-500/40 text-center space-y-5">
+            <CheckCircle2 className="w-12 h-12 text-amber-400 mx-auto" />
             <h3 className="text-2xl font-black text-white">Corrida Concluída!</h3>
             <div className="flex justify-center space-x-2 text-amber-400">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -619,7 +638,7 @@ export default function Cliente() {
                 setShowRatingModal(false);
                 setRideStatus('idle');
               }}
-              className="w-full bg-emerald-500 text-slate-950 font-black py-3 rounded-xl text-sm"
+              className="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-sm"
             >
               Confirmar e Salvar no Dashboard
             </button>

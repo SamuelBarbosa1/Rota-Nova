@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
-import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard, Lock } from 'lucide-react';
+import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard } from 'lucide-react';
 
 export default function Navbar() {
   const { currentUser, logout } = useAuth();
@@ -24,6 +24,14 @@ export default function Navbar() {
     navigate('/');
   };
 
+  const getNavLinkClass = (path) => {
+    return `px-4 py-2 rounded-lg text-sm transition-all flex items-center space-x-2 border ${
+      isActive(path)
+        ? 'bg-slate-800/90 text-amber-400 border-amber-500/40 shadow-sm font-bold'
+        : 'text-slate-300 hover:text-white hover:bg-slate-800/50 font-medium border-transparent'
+    }`;
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
@@ -32,14 +40,14 @@ export default function Navbar() {
             
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform duration-300">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-950/50 group-hover:scale-105 transition-transform duration-300">
                 <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                  <Car className="w-6 h-6 text-emerald-400" />
+                  <Car className="w-6 h-6 text-amber-400" />
                 </div>
               </div>
               <div>
-                <span className="text-2xl font-black tracking-tight text-white flex items-center gap-1">
-                  Rota<span className="text-emerald-400">Já</span>
+                <span className="text-2xl font-black tracking-tight text-white flex items-center gap-0.5">
+                  Rota<span className="text-amber-400">Nova!</span>
                 </span>
                 <span className="text-[10px] font-medium tracking-wider text-slate-400 block -mt-1 uppercase">
                   Aceitou, levou
@@ -49,53 +57,25 @@ export default function Navbar() {
 
             {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center space-x-2">
-              <Link
-                to="/"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  isActive('/') 
-                    ? 'bg-slate-800/80 text-emerald-400 border border-slate-700/50' 
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-                }`}
-              >
-                Início
+              <Link to="/" className={getNavLinkClass('/')}>
+                <span>Início</span>
               </Link>
 
-              <Link
-                to="/regras"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
-                  isActive('/regras') 
-                    ? 'bg-slate-800/80 text-emerald-400 border border-slate-700/50' 
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-                }`}
-              >
+              <Link to="/regras" className={getNavLinkClass('/regras')}>
                 <ShieldAlert className="w-4 h-4" />
                 <span>Regras do App</span>
               </Link>
 
               {/* Show specific dashboard link ONLY if authenticated */}
               {currentUser?.role === 'cliente' && (
-                <Link
-                  to="/cliente"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
-                    isActive('/cliente') 
-                      ? 'bg-slate-800/80 text-emerald-400 border border-slate-700/50' 
-                      : 'text-emerald-400 hover:bg-slate-800/40 font-bold'
-                  }`}
-                >
+                <Link to="/cliente" className={getNavLinkClass('/cliente')}>
                   <User className="w-4 h-4" />
-                  <span>Meu Dashboard (Cliente)</span>
+                  <span>Meu Dashboard</span>
                 </Link>
               )}
 
               {currentUser?.role === 'motorista' && (
-                <Link
-                  to="/motorista"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 ${
-                    isActive('/motorista') 
-                      ? 'bg-slate-800/80 text-emerald-400 border border-slate-700/50' 
-                      : 'text-teal-400 hover:bg-slate-800/40 font-bold'
-                  }`}
-                >
+                <Link to="/motorista" className={getNavLinkClass('/motorista')}>
                   <Car className="w-4 h-4" />
                   <span>Painel do Motorista</span>
                 </Link>
@@ -107,22 +87,20 @@ export default function Navbar() {
               {currentUser ? (
                 <div className="flex items-center space-x-3 bg-slate-900 border border-slate-700/80 p-1.5 pl-3 rounded-2xl">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs ${
-                      currentUser.role === 'cliente' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-teal-500/20 text-teal-400'
-                    }`}>
-                      {currentUser.name.substring(0, 2).toUpperCase()}
+                    <div className="w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs bg-amber-500/20 text-amber-400">
+                      {(currentUser?.name || 'US').substring(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white leading-tight">{currentUser.name}</p>
+                      <p className="text-xs font-bold text-white leading-tight">{currentUser?.name || 'Usuário'}</p>
                       <p className="text-[10px] text-slate-400 capitalize">
-                        {currentUser.role === 'cliente' ? 'Passageiro' : 'Motorista'}
+                        {currentUser?.role === 'cliente' ? 'Passageiro' : 'Motorista'}
                       </p>
                     </div>
                   </div>
 
                   <Link
                     to={currentUser.role === 'cliente' ? '/cliente' : '/motorista'}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-bold transition-colors flex items-center gap-1"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold transition-colors flex items-center gap-1"
                     title="Acessar Dashboard"
                   >
                     <LayoutDashboard className="w-4 h-4" />
@@ -146,7 +124,7 @@ export default function Navbar() {
                   </button>
                   <button
                     onClick={() => openAuth('cliente')}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all text-xs flex items-center space-x-1.5"
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all text-xs flex items-center space-x-1.5"
                   >
                     <span>Criar Conta</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -174,14 +152,14 @@ export default function Navbar() {
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
+              className={`block px-3 py-2 rounded-lg text-sm ${isActive('/') ? 'text-amber-400 font-bold bg-slate-800' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               Início
             </Link>
             <Link
               to="/regras"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
+              className={`block px-3 py-2 rounded-lg text-sm ${isActive('/regras') ? 'text-amber-400 font-bold bg-slate-800' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               Regras do App
             </Link>
@@ -190,7 +168,7 @@ export default function Navbar() {
               <Link
                 to={currentUser.role === 'cliente' ? '/cliente' : '/motorista'}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-bold text-emerald-400 bg-slate-800"
+                className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-400 bg-slate-800"
               >
                 Meu Dashboard ({currentUser.role === 'cliente' ? 'Cliente' : 'Motorista'})
               </Link>
@@ -203,7 +181,7 @@ export default function Navbar() {
                     setMobileMenuOpen(false);
                     openAuth('cliente');
                   }}
-                  className="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-center text-sm"
+                  className="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl text-center text-sm"
                 >
                   Entrar ou Criar Conta
                 </button>

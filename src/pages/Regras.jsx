@@ -42,7 +42,7 @@ export default function Regras() {
       title: "4º Cancelamento Indevido",
       severity: "Descredenciamento Definitivo",
       badgeColor: "bg-red-600 text-white border-red-500",
-      description: "Banimento e descredenciamento definitivo da conta de motorista parceiro RotaJá. Sem direito a recurso."
+      description: "Banimento e descredenciamento definitivo da conta de motorista parceiro Rota Nova!. Sem direito a recurso."
     }
   ];
 
@@ -52,7 +52,7 @@ export default function Regras() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 selection:bg-amber-500 selection:text-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* PAGE HEADER */}
@@ -68,14 +68,14 @@ export default function Regras() {
           </h1>
 
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-            Ao aceitar uma corrida na <strong className="text-emerald-400">RotaJá</strong>, o motorista assume o compromisso de levar o passageiro até o destino informado. O local de embarque ou de desembarque <span className="underline decoration-emerald-400">nunca é motivo de cancelamento</span>.
+            Ao aceitar uma corrida na <strong className="text-amber-400">Rota Nova!</strong>, o motorista me compromete a levar o passageiro até o destino informado. O local de embarque ou de desembarque <span className="underline decoration-amber-400">nunca é motivo de cancelamento</span>.
           </p>
 
         </div>
 
         {/* 1. REGRA NÚMERO 1 BANNER */}
-        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 p-8 rounded-3xl space-y-4 shadow-2xl">
-          <div className="flex items-center space-x-3 text-emerald-400">
+        <div className="bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-900 border-2 border-amber-500/50 p-8 rounded-3xl space-y-4 shadow-2xl">
+          <div className="flex items-center space-x-3 text-amber-400">
             <ShieldCheck className="w-8 h-8" />
             <h2 className="text-2xl font-black text-white">Regra Número 1 — Corrida aceita é corrida realizada</h2>
           </div>
@@ -128,32 +128,32 @@ export default function Regras() {
           </div>
 
           {/* ÚNICAS EXCEÇÕES ACEITAS */}
-          <div className="glass-panel p-8 rounded-3xl border border-emerald-500/30 space-y-6">
+          <div className="glass-panel p-8 rounded-3xl border border-amber-500/30 space-y-6">
             <div className="flex items-center space-x-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Únicas Exceções Aceitas</h3>
-                <p className="text-xs text-emerald-400 font-semibold">Situações de emergência real</p>
+                <p className="text-xs text-amber-400 font-semibold">Situações de emergência real</p>
               </div>
             </div>
 
             <ul className="space-y-3.5 text-sm text-slate-300">
               <li className="flex items-start space-x-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 mt-2 shrink-0"></span>
                 <span>Risco real e comprovado de segurança no momento (bloqueio de via, tiroteio, alagamento).</span>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 mt-2 shrink-0"></span>
                 <span>Problema mecânico do veículo, com registro imediato de foto no aplicativo.</span>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 mt-2 shrink-0"></span>
                 <span>Passageiro em situação de agressão, ameaça ou embriaguez extrema que impeça a viagem com segurança.</span>
               </li>
               <li className="flex items-start space-x-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 mt-2 shrink-0"></span>
                 <span>Emergência médica comprovada do motorista.</span>
               </li>
             </ul>
@@ -212,10 +212,10 @@ export default function Regras() {
         <div className="glass-panel p-8 rounded-3xl border border-slate-800 max-w-3xl mx-auto space-y-6">
           
           <div className="flex items-center space-x-3 border-b border-slate-800 pb-4">
-            <MessageSquareWarning className="w-6 h-6 text-emerald-400" />
+            <MessageSquareWarning className="w-6 h-6 text-amber-400" />
             <div>
               <h3 className="text-xl font-bold text-white">Canal de Ouvidoria & Denúncia</h3>
-              <p className="text-xs text-slate-400">Teve uma viagem recusada indevidamente? Reporte direto para a gerência RotaJá.</p>
+              <p className="text-xs text-slate-400">Teve uma viagem recusada indevidamente? Reporte direto para a gerência Rota Nova!.</p>
             </div>
           </div>
 
@@ -229,7 +229,7 @@ export default function Regras() {
                     type="text"
                     value={denunciaData.name}
                     onChange={(e) => setDenunciaData({...denunciaData, name: e.target.value})}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
                     placeholder="Nome completo"
                     required
                   />
@@ -241,7 +241,7 @@ export default function Regras() {
                     type="text"
                     value={denunciaData.phone}
                     onChange={(e) => setDenunciaData({...denunciaData, phone: e.target.value})}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
                     placeholder="(00) 00000-0000"
                     required
                   />
@@ -253,7 +253,7 @@ export default function Regras() {
                 <select
                   value={denunciaData.reason}
                   onChange={(e) => setDenunciaData({...denunciaData, reason: e.target.value})}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
                 >
                   <option value="recusa_bairro">Motorista recusou/cancelou por causa do bairro/destino</option>
                   <option value="recusa_terra">Motorista se recusou a entrar em rua de terra / chão</option>
@@ -267,7 +267,7 @@ export default function Regras() {
                 <textarea
                   value={denunciaData.details}
                   onChange={(e) => setDenunciaData({...denunciaData, details: e.target.value})}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
                   rows={3}
                   placeholder="Informe o nome ou placa do motorista (se houver) e horário aproximado..."
                   required
@@ -276,23 +276,23 @@ export default function Regras() {
 
               <button
                 type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg text-sm transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg text-sm transition-colors flex items-center justify-center space-x-2"
               >
                 <Send className="w-4 h-4" />
-                <span>Enviar Relato para Auditoria RotaJá</span>
+                <span>Enviar Relato para Auditoria Rota Nova!</span>
               </button>
 
             </form>
           ) : (
-            <div className="bg-emerald-950/80 border border-emerald-500 p-6 rounded-2xl text-center space-y-3">
-              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+            <div className="bg-amber-950/80 border border-amber-500 p-6 rounded-2xl text-center space-y-3">
+              <CheckCircle2 className="w-12 h-12 text-amber-400 mx-auto" />
               <h4 className="text-xl font-bold text-white">Denúncia Registrada com Sucesso!</h4>
               <p className="text-xs text-slate-300">
                 Sua ocorrência foi encaminhada com prioridade para a nossa junta de auditoria. Caso comprovada a infração, o motorista será notificado e aplicaremos as medidas previstas no contrato.
               </p>
               <button
                 onClick={() => setDenunciaSubmitted(false)}
-                className="bg-emerald-500 text-slate-950 font-bold px-6 py-2 rounded-xl text-xs"
+                className="bg-amber-500 text-slate-950 font-bold px-6 py-2 rounded-xl text-xs"
               >
                 Enviar Novo Relato
               </button>
