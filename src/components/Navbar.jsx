@@ -80,6 +80,13 @@ export default function Navbar() {
                   <span>Painel do Motorista</span>
                 </Link>
               )}
+
+              {currentUser?.role === 'admin' && (
+                <Link to="/admin" className={getNavLinkClass('/admin')}>
+                  <LayoutDashboard className="w-4 h-4 text-purple-400" />
+                  <span className="text-purple-300 font-bold">Painel Admin</span>
+                </Link>
+              )}
             </nav>
 
             {/* Right Action Bar */}
@@ -87,19 +94,23 @@ export default function Navbar() {
               {currentUser ? (
                 <div className="flex items-center space-x-3 bg-slate-900 border border-slate-700/80 p-1.5 pl-3 rounded-2xl">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs bg-amber-500/20 text-amber-400">
+                    <div className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs ${
+                      currentUser.role === 'admin' 
+                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                        : 'bg-amber-500/20 text-amber-400'
+                    }`}>
                       {(currentUser?.name || 'US').substring(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-xs font-bold text-white leading-tight">{currentUser?.name || 'Usuário'}</p>
                       <p className="text-[10px] text-slate-400 capitalize">
-                        {currentUser?.role === 'cliente' ? 'Passageiro' : 'Motorista'}
+                        {currentUser?.role === 'cliente' ? 'Passageiro' : currentUser?.role === 'motorista' ? 'Motorista' : 'Administrador'}
                       </p>
                     </div>
                   </div>
 
                   <Link
-                    to={currentUser.role === 'cliente' ? '/cliente' : '/motorista'}
+                    to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : '/admin'}
                     className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold transition-colors flex items-center gap-1"
                     title="Acessar Dashboard"
                   >
@@ -166,16 +177,16 @@ export default function Navbar() {
 
             {currentUser && (
               <Link
-                to={currentUser.role === 'cliente' ? '/cliente' : '/motorista'}
+                to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : '/admin'}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-400 bg-slate-800"
               >
-                Meu Dashboard ({currentUser.role === 'cliente' ? 'Cliente' : 'Motorista'})
+                Meu Dashboard ({currentUser.role === 'cliente' ? 'Cliente' : currentUser.role === 'motorista' ? 'Motorista' : 'Admin'})
               </Link>
             )}
 
             {!currentUser && (
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
@@ -185,6 +196,13 @@ export default function Navbar() {
                 >
                   Entrar ou Criar Conta
                 </button>
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center bg-purple-950/60 text-purple-300 font-bold py-2.5 rounded-xl border border-purple-500/40 text-xs"
+                >
+                  Painel Administrativo
+                </Link>
               </div>
             )}
           </div>

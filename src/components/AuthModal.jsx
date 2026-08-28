@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { User, Car, X, ArrowRight, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) {
-  const { loginAsCliente, loginAsMotorista } = useAuth();
+  const { loginAsCliente, loginAsMotorista, loginAsAdmin } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState(initialRole); // 'cliente' | 'motorista'
   const [isRegister, setIsRegister] = useState(true);
@@ -86,6 +86,12 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
   const handleQuickDemoDriver = () => {
     loginAsMotorista({ isDemo: true });
     navigate('/motorista');
+    onClose();
+  };
+
+  const handleQuickDemoAdmin = () => {
+    loginAsAdmin();
+    navigate('/admin');
     onClose();
   };
 
@@ -215,22 +221,30 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
         </form>
 
         {/* Quick Demo Accounts Switcher */}
-        <div className="pt-2 border-t border-slate-800 text-center space-y-2">
+        <div className="pt-2 border-t border-slate-800 text-center space-y-2.5">
           <p className="text-[11px] text-slate-400">Ou entre direto com uma conta de demonstração:</p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleQuickDemoClient}
-              className="flex-1 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/30 text-xs font-bold py-2 rounded-xl transition-colors"
+              className="bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/30 text-xs font-bold py-2 px-2 rounded-xl transition-colors"
             >
-              Demo Cliente (Passageiro)
+              Demo Cliente
             </button>
             <button
               onClick={handleQuickDemoDriver}
-              className="flex-1 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 text-xs font-bold py-2 rounded-xl transition-colors"
+              className="bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 text-xs font-bold py-2 px-2 rounded-xl transition-colors"
             >
-              Demo Motorista (Condutor)
+              Demo Motorista
             </button>
           </div>
+
+          <button
+            onClick={handleQuickDemoAdmin}
+            className="w-full bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/40 text-xs font-bold py-2.5 rounded-xl transition-all flex items-center justify-center space-x-2"
+          >
+            <ShieldCheck className="w-4 h-4 text-purple-400" />
+            <span>Acessar Painel Administrativo (Gestão)</span>
+          </button>
         </div>
 
       </div>

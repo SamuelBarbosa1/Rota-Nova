@@ -41,6 +41,9 @@ export default function Footer() {
               <li>
                 <Link to="/regras" className="hover:text-amber-400 transition-colors">Regras Antibloqueio e Exceções</Link>
               </li>
+              <li>
+                <Link to="/admin" className="text-purple-400 hover:text-purple-300 font-bold transition-colors">Painel Administrativo (Gestão)</Link>
+              </li>
             </ul>
           </div>
 

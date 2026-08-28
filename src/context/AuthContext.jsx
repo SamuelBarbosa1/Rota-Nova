@@ -23,8 +23,127 @@ export function AuthProvider({ children }) {
           console.error("Failed to parse saved motorista user", e);
         }
       }
+    } else if (activeRole === 'admin') {
+      const saved = localStorage.getItem('rotanova_admin_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved admin user", e);
+        }
+      }
     }
     return null;
+  });
+
+  // Default system drivers list for admin view and management
+  const [driversList, setDriversList] = useState(() => {
+    const saved = localStorage.getItem('rotanova_drivers_list');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse drivers list", e);
+      }
+    }
+    return [
+      {
+        id: 'drv-101',
+        name: 'Roberto Barbosa',
+        email: 'roberto@rotanova.com.br',
+        phone: '(61) 98765-4321',
+        carModel: 'Toyota Etios Sedan 1.5 (2021)',
+        carPlate: 'ABC-5E67',
+        cnh: '09876543210',
+        interviewPassed: true,
+        interviewScore: 100,
+        status: 'Aprovado',
+        ridesCompleted: 58,
+        rating: 4.98,
+        joinedDate: '12/05/2026',
+        region: 'Sol Nascente / Ceilândia'
+      },
+      {
+        id: 'drv-102',
+        name: 'Carlos Eduardo Silva',
+        email: 'carlos.silva@rotanova.com.br',
+        phone: '(61) 99123-8877',
+        carModel: 'Toyota Corolla 2.0 (2022)',
+        carPlate: 'JKL-9812',
+        cnh: '12345678901',
+        interviewPassed: true,
+        interviewScore: 95,
+        status: 'Aprovado',
+        ridesCompleted: 142,
+        rating: 4.99,
+        joinedDate: '10/01/2026',
+        region: 'Taguatinga / Samambaia'
+      },
+      {
+        id: 'drv-103',
+        name: 'Luciana Costa',
+        email: 'luciana.costa@gmail.com',
+        phone: '(61) 98443-1122',
+        carModel: 'Hyundai HB20 1.6 (2020)',
+        carPlate: 'FGH-4411',
+        cnh: '87654321099',
+        interviewPassed: false,
+        interviewScore: 85,
+        status: 'Pendente',
+        ridesCompleted: 0,
+        rating: 5.00,
+        joinedDate: 'Hoje às 10:15',
+        region: 'Colônia Agrícola Samambaia'
+      },
+      {
+        id: 'drv-104',
+        name: 'Marcos Vinicius Santos',
+        email: 'marcos.v@hotmail.com',
+        phone: '(61) 99334-7788',
+        carModel: 'Nissan Versa 1.6 (2023)',
+        carPlate: 'MNO-3321',
+        cnh: '54321678900',
+        interviewPassed: true,
+        interviewScore: 100,
+        status: 'Aprovado',
+        ridesCompleted: 89,
+        rating: 4.95,
+        joinedDate: '02/04/2026',
+        region: 'Ceilândia / Sol Nascente'
+      },
+      {
+        id: 'drv-105',
+        name: 'Diego Fernandes',
+        email: 'diego.fernandes@outlook.com',
+        phone: '(61) 98877-6655',
+        carModel: 'Chevrolet Onix Plus 1.0T (2022)',
+        carPlate: 'PQR-7788',
+        cnh: '99887766554',
+        interviewPassed: false,
+        interviewScore: 70,
+        status: 'Pendente',
+        ridesCompleted: 0,
+        rating: 5.00,
+        joinedDate: 'Ontem às 16:40',
+        region: 'Recanto das Emas'
+      },
+      {
+        id: 'drv-106',
+        name: 'Patricia Albuquerque',
+        email: 'patricia.alb@gmail.com',
+        phone: '(61) 99655-4433',
+        carModel: 'Honda City LX 1.5 (2021)',
+        carPlate: 'STU-1122',
+        cnh: '66554433221',
+        interviewPassed: true,
+        interviewScore: 90,
+        status: 'Aprovado',
+        ridesCompleted: 34,
+        rating: 4.92,
+        joinedDate: '15/06/2026',
+        region: 'Sol Nascente Trecho 3'
+      }
+    ];
   });
 
   useEffect(() => {
@@ -34,11 +153,17 @@ export function AuthProvider({ children }) {
         localStorage.setItem('rotanova_cliente_user', JSON.stringify(currentUser));
       } else if (currentUser.role === 'motorista') {
         localStorage.setItem('rotanova_motorista_user', JSON.stringify(currentUser));
+      } else if (currentUser.role === 'admin') {
+        localStorage.setItem('rotanova_admin_user', JSON.stringify(currentUser));
       }
     } else {
       localStorage.removeItem('rotanova_active_role');
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('rotanova_drivers_list', JSON.stringify(driversList));
+  }, [driversList]);
 
   const loginAsCliente = (data = {}) => {
     const isDemo = data.isDemo !== undefined ? data.isDemo : false;
@@ -131,6 +256,37 @@ export function AuthProvider({ children }) {
     return user;
   };
 
+  const loginAsAdmin = (data = {}) => {
+    const user = {
+      id: `usr_adm_${Date.now()}`,
+      name: data.name || 'Administrador RotaNova',
+      email: data.email || 'gestao@rotanova.com.br',
+      role: 'admin',
+      isDemo: true,
+      title: 'Direção Geral de Operações'
+    };
+    setCurrentUser(user);
+    return user;
+  };
+
+  const approveDriver = (driverId) => {
+    setDriversList((prev) =>
+      prev.map((d) => (d.id === driverId ? { ...d, status: 'Aprovado', interviewPassed: true } : d))
+    );
+  };
+
+  const toggleDriverStatus = (driverId) => {
+    setDriversList((prev) =>
+      prev.map((d) => {
+        if (d.id === driverId) {
+          const nextStatus = d.status === 'Aprovado' ? 'Suspenso' : 'Aprovado';
+          return { ...d, status: nextStatus };
+        }
+        return d;
+      })
+    );
+  };
+
   const completeInterview = (score = 100) => {
     if (!currentUser || currentUser.role !== 'motorista') return;
     const updated = {
@@ -202,8 +358,12 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{ 
       currentUser, 
+      driversList,
       loginAsCliente, 
       loginAsMotorista, 
+      loginAsAdmin,
+      approveDriver,
+      toggleDriverStatus,
       completeInterview, 
       addClientCompletedTrip, 
       completeDriverTrip, 
