@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS rides (
     destination_address TEXT NOT NULL,
     destination_lat DECIMAL(10, 8) NOT NULL,
     destination_lng DECIMAL(11, 8) NOT NULL,
-    category VARCHAR(64) NOT NULL DEFAULT 'pop', -- 'pop' | 'comfort' | 'xl'
-    category_name VARCHAR(64) NOT NULL DEFAULT 'Rota Nova Pop',
+    category VARCHAR(64) NOT NULL DEFAULT 'via_go', -- 'via_go' | 'via_plus' | 'via_eco' | 'via_delas' | 'via_black' | 'via_prime' | 'via_box' | 'via_pet'
+    category_name VARCHAR(64) NOT NULL DEFAULT 'VIA GO',
     price DECIMAL(10, 2) NOT NULL,
     distance_km DECIMAL(6, 2),
     duration_minutes INTEGER,

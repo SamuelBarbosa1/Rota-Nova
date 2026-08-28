@@ -32,6 +32,15 @@ export function AuthProvider({ children }) {
           console.error("Failed to parse saved admin user", e);
         }
       }
+    } else if (activeRole === 'investidor') {
+      const saved = localStorage.getItem('rotanova_investidor_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved investor user", e);
+        }
+      }
     }
     return null;
   });
@@ -135,15 +144,28 @@ export function AuthProvider({ children }) {
         carModel: 'Honda City LX 1.5 (2021)',
         carPlate: 'STU-1122',
         cnh: '66554433221',
-        interviewPassed: true,
-        interviewScore: 90,
+        vehicle: 'Nissan Versa 1.6 16V',
+        plate: 'ABC-5E67',
         status: 'Aprovado',
-        ridesCompleted: 34,
-        rating: 4.92,
-        joinedDate: '15/06/2026',
-        region: 'Sol Nascente Trecho 3'
+        interviewPassed: true,
+        interviewScore: 100,
+        tripsCount: 215,
+        rating: 4.99
       }
     ];
+  });
+
+  // Persistent registry of created user accounts
+  const [usersRegistry, setUsersRegistry] = useState(() => {
+    const saved = localStorage.getItem('rotanova_users_registry');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse users registry", e);
+      }
+    }
+    return [];
   });
 
   useEffect(() => {
@@ -155,6 +177,8 @@ export function AuthProvider({ children }) {
         localStorage.setItem('rotanova_motorista_user', JSON.stringify(currentUser));
       } else if (currentUser.role === 'admin') {
         localStorage.setItem('rotanova_admin_user', JSON.stringify(currentUser));
+      } else if (currentUser.role === 'investidor') {
+        localStorage.setItem('rotanova_investidor_user', JSON.stringify(currentUser));
       }
     } else {
       localStorage.removeItem('rotanova_active_role');
@@ -165,11 +189,39 @@ export function AuthProvider({ children }) {
     localStorage.setItem('rotanova_drivers_list', JSON.stringify(driversList));
   }, [driversList]);
 
+  useEffect(() => {
+    localStorage.setItem('rotanova_users_registry', JSON.stringify(usersRegistry));
+  }, [usersRegistry]);
+
+  const saveToRegistry = (user) => {
+    if (!user || !user.email) return;
+    setUsersRegistry(prev => {
+      const idx = prev.findIndex(u => u.email.toLowerCase() === user.email.toLowerCase() && u.role === user.role);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = user;
+        return copy;
+      }
+      return [...prev, user];
+    });
+  };
+
   const loginAsCliente = (data = {}) => {
     const isDemo = data.isDemo !== undefined ? data.isDemo : false;
+    const inputEmail = (data.email || '').trim().toLowerCase();
+
+    // Check if user exists in registry
+    if (!isDemo && inputEmail) {
+      const existing = usersRegistry.find(u => u.email.toLowerCase() === inputEmail && u.role === 'cliente');
+      if (existing) {
+        setCurrentUser(existing);
+        return existing;
+      }
+    }
+
     const user = {
       id: `usr_c_${Date.now()}`,
-      name: data.name || (isDemo ? 'Juliana Mendes' : 'Cliente Novo'),
+      name: data.name || (isDemo ? 'Juliana Mendes' : 'Cliente Passageiro'),
       email: data.email || (isDemo ? 'juliana@rotanova.com.br' : 'cliente@rotanova.com.br'),
       phone: data.phone || '(61) 99876-5432',
       role: 'cliente',
@@ -188,9 +240,9 @@ export function AuthProvider({ children }) {
             date: 'Hoje às 18:30',
             origin: 'Eixo Monumental, Bloco A',
             destination: 'Sol Nascente, Trecho 3 (Estrada de Chão)',
-            price: 24.50,
+            price: 22.50,
             driver: 'Carlos Eduardo (Toyota Corolla)',
-            category: 'Rota Nova Pop',
+            category: 'VIA GO',
             status: 'Concluída'
           },
           {
@@ -198,9 +250,19 @@ export function AuthProvider({ children }) {
             date: '26/08/2026 às 19:40',
             origin: 'Rodoviária do Plano Piloto',
             destination: 'Colônia Agrícola Samambaia, Chácara 102 (Rua de Terra)',
-            price: 28.90,
+            price: 29.90,
             driver: 'Marcos Vinicius (Toyota Etios)',
-            category: 'Rota Nova Comfort',
+            category: 'VIA PLUS',
+            status: 'Concluída'
+          },
+          {
+            id: 'ROT-8730',
+            date: '24/08/2026 às 08:15',
+            origin: 'Taguatinga Shopping',
+            destination: 'Asa Norte — SQN 308',
+            price: 44.00,
+            driver: 'Roberto Barbosa (Nissan Versa)',
+            category: 'VIA BLACK',
             status: 'Concluída'
           }
         ]
@@ -213,11 +275,42 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(user);
+    if (!isDemo) saveToRegistry(user);
     return user;
   };
 
   const loginAsMotorista = (data = {}) => {
     const isDemo = data.isDemo !== undefined ? data.isDemo : false;
+    const inputEmail = (data.email || '').trim().toLowerCase();
+
+    if (!isDemo && inputEmail) {
+      const existingInList = driversList.find(d => d.email && d.email.toLowerCase() === inputEmail);
+      const existingInReg = usersRegistry.find(u => u.email && u.email.toLowerCase() === inputEmail && u.role === 'motorista');
+      const existing = existingInReg || (existingInList ? {
+        id: existingInList.id,
+        name: existingInList.name,
+        email: existingInList.email,
+        phone: existingInList.phone || '(61) 98765-4321',
+        role: 'motorista',
+        isDemo: false,
+        driverData: {
+          carModel: existingInList.vehicle || 'Veículo Registrado',
+          carPlate: existingInList.plate || 'JKL-0000',
+          cnh: '09876543210',
+          interviewPassed: existingInList.interviewPassed !== false,
+          interviewScore: existingInList.interviewScore || 100
+        },
+        stats: {
+          grossEarnings: 0.00, platformFee: 0.00, fuelEstimate: 0.00, netProfit: 0.00, ridesCompleted: 0, acceptanceRate: 100, hoursOnline: 0, rating: 5.00
+        }
+      } : null);
+
+      if (existing) {
+        setCurrentUser(existing);
+        return existing;
+      }
+    }
+
     const user = {
       id: `usr_m_${Date.now()}`,
       name: data.name || (isDemo ? 'Roberto Barbosa' : 'Motorista Parceiro'),
@@ -253,6 +346,7 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(user);
+    if (!isDemo) saveToRegistry(user);
     return user;
   };
 
@@ -298,6 +392,16 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(updated);
+    localStorage.setItem('rotanova_motorista_user', JSON.stringify(updated));
+    saveToRegistry(updated);
+
+    setDriversList((prev) =>
+      prev.map((d) =>
+        d.email === currentUser.email || d.id === currentUser.id
+          ? { ...d, interviewPassed: true, interviewScore: score, status: 'Aprovado' }
+          : d
+      )
+    );
   };
 
   const addClientCompletedTrip = (newTrip) => {
@@ -317,6 +421,7 @@ export function AuthProvider({ children }) {
     };
     setCurrentUser(updatedUser);
     localStorage.setItem('rotanova_cliente_user', JSON.stringify(updatedUser));
+    saveToRegistry(updatedUser);
   };
 
   const completeDriverTrip = (rideData = {}) => {
@@ -349,6 +454,69 @@ export function AuthProvider({ children }) {
     };
     setCurrentUser(updatedUser);
     localStorage.setItem('rotanova_motorista_user', JSON.stringify(updatedUser));
+    saveToRegistry(updatedUser);
+  };
+
+  const loginAsInvestidor = (data = {}) => {
+    const isDemo = data.isDemo !== undefined ? data.isDemo : false;
+    const inputEmail = (data.email || '').trim().toLowerCase();
+
+    if (!isDemo && inputEmail) {
+      const existing = usersRegistry.find(u => u.email.toLowerCase() === inputEmail && u.role === 'investidor');
+      if (existing) {
+        setCurrentUser(existing);
+        return existing;
+      }
+    }
+
+    const user = {
+      id: `usr_inv_${Date.now()}`,
+      name: data.name || (isDemo ? 'Alexandre Prado' : 'Investidor Apoiador'),
+      email: data.email || (isDemo ? 'alexandre.prado@investor.com.br' : 'investidor@rotanova.com.br'),
+      phone: data.phone || '(61) 98112-9900',
+      role: 'investidor',
+      investorType: data.investorType || 'Investidor Anjo / Apoiador',
+      company: data.company || 'Prado Capital Mobility',
+      isDemo: isDemo,
+      stats: {
+        registeredUsers: {
+          today: 5,
+          week: 61,
+          month: 316,
+          year: 27171,
+          total: 292526
+        },
+        driversCount: {
+          today: 2,
+          week: 14,
+          month: 88,
+          total: 3840
+        },
+        clientsCount: {
+          today: 3,
+          week: 47,
+          month: 228,
+          total: 288686
+        },
+        grossSales: {
+          today: 1766.71,
+          week: 10190.31,
+          month: 151348.54,
+          year: 1450200.00,
+          total: 3068722.58
+        },
+        netRevenue: {
+          today: 176.67,
+          week: 1019.03,
+          month: 15134.85,
+          year: 145020.00,
+          total: 306872.25
+        }
+      }
+    };
+    setCurrentUser(user);
+    if (!isDemo) saveToRegistry(user);
+    return user;
   };
 
   const logout = () => {
@@ -362,6 +530,7 @@ export function AuthProvider({ children }) {
       loginAsCliente, 
       loginAsMotorista, 
       loginAsAdmin,
+      loginAsInvestidor,
       approveDriver,
       toggleDriverStatus,
       completeInterview, 

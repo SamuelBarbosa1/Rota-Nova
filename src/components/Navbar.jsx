@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
-import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard } from 'lucide-react';
+import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard, TrendingUp } from 'lucide-react';
 
 export default function Navbar() {
   const { currentUser, logout } = useAuth();
@@ -66,6 +66,14 @@ export default function Navbar() {
                 <span>Regras do App</span>
               </Link>
 
+              {/* Navigation Links */}
+              {currentUser?.role !== 'investidor' && (
+                <Link to="/investidor" className={getNavLinkClass('/investidor')}>
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  <span>Investidor & Apoiador</span>
+                </Link>
+              )}
+
               {/* Show specific dashboard link ONLY if authenticated */}
               {currentUser?.role === 'cliente' && (
                 <Link to="/cliente" className={getNavLinkClass('/cliente')}>
@@ -78,6 +86,13 @@ export default function Navbar() {
                 <Link to="/motorista" className={getNavLinkClass('/motorista')}>
                   <Car className="w-4 h-4" />
                   <span>Painel do Motorista</span>
+                </Link>
+              )}
+
+              {currentUser?.role === 'investidor' && (
+                <Link to="/investidor" className={getNavLinkClass('/investidor')}>
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
+                  <span>Painel do Investidor</span>
                 </Link>
               )}
 
@@ -97,6 +112,8 @@ export default function Navbar() {
                     <div className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs ${
                       currentUser.role === 'admin' 
                         ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                        : currentUser.role === 'investidor'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                         : 'bg-amber-500/20 text-amber-400'
                     }`}>
                       {(currentUser?.name || 'US').substring(0, 2).toUpperCase()}
@@ -104,13 +121,19 @@ export default function Navbar() {
                     <div>
                       <p className="text-xs font-bold text-white leading-tight">{currentUser?.name || 'Usuário'}</p>
                       <p className="text-[10px] text-slate-400 capitalize">
-                        {currentUser?.role === 'cliente' ? 'Passageiro' : currentUser?.role === 'motorista' ? 'Motorista' : 'Administrador'}
+                        {currentUser?.role === 'cliente' 
+                          ? 'Passageiro' 
+                          : currentUser?.role === 'motorista' 
+                          ? 'Motorista' 
+                          : currentUser?.role === 'investidor'
+                          ? 'Investidor Apoiador'
+                          : 'Administrador'}
                       </p>
                     </div>
                   </div>
 
                   <Link
-                    to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : '/admin'}
+                    to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : currentUser.role === 'investidor' ? '/investidor' : '/admin'}
                     className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold transition-colors flex items-center gap-1"
                     title="Acessar Dashboard"
                   >

@@ -10,13 +10,23 @@ import {
 
 export default function Motorista() {
   const { currentUser, completeInterview, completeDriverTrip } = useAuth();
-  const [activeTab, setActiveTab] = useState('cockpit'); // 'cockpit' | 'financeiro' | 'entrevista'
+  const isInterviewPassed = !!currentUser?.driverData?.interviewPassed;
+
+  const [activeTab, setActiveTab] = useState(() => (isInterviewPassed ? 'cockpit' : 'entrevista')); // default to entrevista if pending
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Online / Radar state
-  const [isOnline, setIsOnline] = useState(true);
+  // Online / Radar state: Only allow online if interview is passed
+  const [isOnline, setIsOnline] = useState(() => isInterviewPassed);
   const [activeCall, setActiveCall] = useState(null);
   const [acceptedRide, setAcceptedRide] = useState(null);
+
+  const handleToggleOnline = () => {
+    if (!isInterviewPassed) {
+      setActiveTab('entrevista');
+      return;
+    }
+    setIsOnline(prev => !prev);
+  };
 
   const handleFinishRide = () => {
     if (acceptedRide) {
@@ -63,6 +73,8 @@ export default function Motorista() {
     if (calculatedScore >= 75) {
       setQuizFailed(null);
       completeInterview(calculatedScore);
+      setIsOnline(true);
+      setActiveTab('cockpit');
     } else {
       setQuizFailed({
         score: calculatedScore,
@@ -176,14 +188,56 @@ export default function Motorista() {
   const carPlate = currentUser?.driverData?.carPlate || 'JKL-0000';
 
   const simulateIncomingCall = () => {
-    setActiveCall({
-      id: 'CALL-902',
-      pickup: 'Setor de Indústrias Gráficas (SIG), Quadra 1 — Brasília, DF',
-      dropoff: 'Colônia Agrícola 26 de Julho, Chácara 80 (Estrada de Terra) — DF',
-      price: 'R$ 38,40',
-      distance: '8.2 km',
-      passenger: 'Carlos M.'
-    });
+    const mockViaCalls = [
+      {
+        id: 'CALL-902',
+        pickup: 'Setor de Indústrias Gráficas (SIG), Quadra 1 — Brasília, DF',
+        dropoff: 'Colônia Agrícola 26 de Julho, Chácara 80 (Estrada de Terra) — DF',
+        price: 'R$ 38,40',
+        distance: '8.2 km',
+        passenger: 'Carlos M.',
+        category: 'VIA PLUS (Mais conforto)'
+      },
+      {
+        id: 'CALL-905',
+        pickup: 'Rodoviária do Plano Piloto — Brasília, DF',
+        dropoff: 'Sol Nascente, Trecho 3, Chácara 28 — DF',
+        price: 'R$ 24,50',
+        distance: '14.5 km',
+        passenger: 'Juliana S.',
+        category: 'VIA GO (Econômico inteligente)'
+      },
+      {
+        id: 'CALL-912',
+        pickup: 'Taguatinga Shopping — DF',
+        dropoff: 'Vicente Pires, Rua 4C (Rua de Terra)',
+        price: 'R$ 49,00',
+        distance: '10.1 km',
+        passenger: 'Mariana T. & Rex (Pet)',
+        category: 'VIA PET (Mobilidade pet friendly)'
+      },
+      {
+        id: 'CALL-918',
+        pickup: 'Setor Hoteleiro Norte — Brasília, DF',
+        dropoff: 'Aeroporto Internacional JK — DF',
+        price: 'R$ 68,00',
+        distance: '16.0 km',
+        passenger: 'Dr. Fernando A.',
+        category: 'VIA BLACK (Executivo premium)'
+      },
+      {
+        id: 'CALL-922',
+        pickup: 'Supermercado Carrefour — Taguatinga Sul',
+        dropoff: 'Ceilândia Norte, QNN 18',
+        price: 'R$ 28,00',
+        distance: '6.4 km',
+        passenger: 'Beatriz L. (Compras de Mercado)',
+        category: 'VIA BOX (Mercado e entregas)'
+      }
+    ];
+
+    const randomCall = mockViaCalls[Math.floor(Math.random() * mockViaCalls.length)];
+    setActiveCall(randomCall);
   };
 
   const handleAcceptRideCall = () => {
@@ -270,146 +324,196 @@ export default function Motorista() {
         {/* TAB 1: COCKPIT AO VIVO */}
         {activeTab === 'cockpit' && (
           <div className="space-y-8 animate-fadeIn">
-            
-            <div className="glass-panel p-6 rounded-3xl border border-amber-500/40 flex flex-col md:flex-row items-center justify-between gap-6">
-              
-              <div className="flex items-center space-x-3">
-                <div className={`w-3.5 h-3.5 rounded-full ${isOnline ? 'bg-amber-400 animate-ping' : 'bg-slate-500'}`}></div>
-                <div>
-                  <h3 className="text-base font-black text-white">
-                    {isOnline ? 'Modo Online — Prontidão Rota Nova' : 'Modo Offline (Pausa)'}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {isOnline ? 'Pronto para receber chamadas de passageiros na sua região' : 'Ative para começar a rodar e faturar'}
+            {!isInterviewPassed ? (
+              <div className="glass-panel p-8 sm:p-12 rounded-3xl border-2 border-rose-500/40 bg-gradient-to-b from-slate-900 via-slate-900 to-rose-950/20 text-center space-y-6 shadow-2xl">
+                <div className="w-20 h-20 rounded-3xl bg-rose-500/20 text-rose-400 border border-rose-500/40 mx-auto flex items-center justify-center shadow-lg shadow-rose-500/10">
+                  <Lock className="w-10 h-10" />
+                </div>
+
+                <div className="space-y-3 max-w-xl mx-auto">
+                  <span className="text-xs font-black text-rose-400 uppercase tracking-widest bg-rose-950/80 border border-rose-800/80 px-4 py-1.5 rounded-full inline-flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    Cockpit & Radar Bloqueados
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white">
+                    Entrevista de Segurança Obrigatória Pendente
+                  </h2>
+                  <p className="text-slate-300 text-sm leading-relaxed">
+                    Sua conta de motorista foi cadastrada com sucesso! No entanto, para poder ficar <strong className="text-amber-400">Online no Radar</strong> e <strong className="text-amber-400">Aceitar Corridas</strong>, é obrigatório realizar a Entrevista de Segurança de Conduta e atingir pontuação mínima de <strong>75%</strong>.
                   </p>
                 </div>
-              </div>
 
-              <button
-                onClick={() => setIsOnline(!isOnline)}
-                className={`px-6 py-3 rounded-xl font-black text-xs transition-all shadow-lg flex items-center space-x-2 ${
-                  isOnline
-                    ? 'bg-amber-500 text-slate-950 shadow-amber-500/20'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>{isOnline ? 'DESATIVAR RADAR (IR OFFLINE)' : 'FICAR ONLINE AGORA'}</span>
-              </button>
+                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl max-w-md mx-auto text-left text-xs space-y-2">
+                  <p className="font-bold text-amber-400 flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4" />
+                    Compromisso da Regra de Ouro Rota Nova:
+                  </p>
+                  <p className="text-slate-400">
+                    A prova avalia a compreensão do regulamento anticancelamento e o compromisso de levar o passageiro até o destino final (mesmo em estradas de chão ou áreas periféricas).
+                  </p>
+                </div>
 
-            </div>
-
-            {/* RADAR */}
-            <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6">
-              
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-amber-400" />
-                    Radar de Corridas Rota Nova em Tempo Real
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Alertas de chamadas validadas sem filtro de bairro.</p>
-                </div>
-
-                {isOnline && !activeCall && !acceptedRide && (
                   <button
-                    onClick={simulateIncomingCall}
-                    className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 font-bold px-4 py-2 rounded-xl text-xs transition-colors"
+                    onClick={() => setActiveTab('entrevista')}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-xl shadow-xl shadow-amber-500/20 text-sm transition-all inline-flex items-center space-x-2 transform hover:-translate-y-0.5"
                   >
-                    Simular Nova Chamada Chegando
+                    <FileCheck className="w-5 h-5" />
+                    <span>Realizar Entrevista Obrigatória Agora</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
-                )}
+                </div>
               </div>
-
-              {activeCall && (
-                <div className="bg-slate-900 border-2 border-amber-500 p-6 rounded-2xl space-y-4 animate-bounce-subtle">
+            ) : (
+              <>
+                <div className="glass-panel p-6 rounded-3xl border border-amber-500/40 flex flex-col md:flex-row items-center justify-between gap-6">
                   
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-                      NOVA CORRIDA DISPONÍVEL
-                    </span>
-                    <span className="text-xl font-black text-white">{activeCall.price}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3.5 h-3.5 rounded-full ${isOnline ? 'bg-amber-400 animate-ping' : 'bg-slate-500'}`}></div>
+                    <div>
+                      <h3 className="text-base font-black text-white">
+                        {isOnline ? 'Modo Online — Prontidão Rota Nova' : 'Modo Offline (Pausa)'}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {isOnline ? 'Pronto para receber chamadas de passageiros na sua região' : 'Ative para começar a rodar e faturar'}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <p className="text-slate-300"><strong>Embarque:</strong> {activeCall.pickup}</p>
-                    <p className="text-slate-300"><strong>Desembarque:</strong> <span className="text-amber-400 font-semibold">{activeCall.dropoff}</span></p>
-                    <p className="text-xs text-slate-400">Passageiro: {activeCall.passenger} • Distância: {activeCall.distance}</p>
-                  </div>
-
-                  <div className="bg-amber-950/80 border border-amber-800 p-3 rounded-xl text-xs text-amber-300 font-medium">
-                    ⚠️ Compromisso da Regra de Ouro: Ao aceitar esta viagem, você se compromete a concluí-la sem cancelamento.
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleAcceptRideCall}
-                      className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg transition-colors text-sm"
-                    >
-                      Aceitar Corrida (Compromisso Assumido)
-                    </button>
-                    <button
-                      onClick={() => setActiveCall(null)}
-                      className="px-6 bg-slate-800 text-slate-400 font-bold rounded-xl text-xs hover:text-white"
-                    >
-                      Recusar Antes de Aceitar
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleToggleOnline}
+                    className={`px-6 py-3 rounded-xl font-black text-xs transition-all shadow-lg flex items-center space-x-2 ${
+                      isOnline
+                        ? 'bg-amber-500 text-slate-950 shadow-amber-500/20'
+                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>{isOnline ? 'DESATIVAR RADAR (IR OFFLINE)' : 'FICAR ONLINE AGORA'}</span>
+                  </button>
 
                 </div>
-              )}
 
-              {acceptedRide && (
-                <div className="bg-amber-950/60 border border-amber-500/60 p-6 rounded-2xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-base font-bold text-white flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-amber-400" />
-                      Corrida em Andamento (Regra Aceitou, Levou Ativa)
-                    </h4>
-                    <span className="text-sm font-black text-amber-400">{acceptedRide.price}</span>
+                {/* RADAR */}
+                <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6">
+                  
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-amber-400" />
+                        Radar de Corridas Rota Nova em Tempo Real
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Alertas de chamadas validadas sem filtro de bairro.</p>
+                    </div>
+
+                    {isOnline && !activeCall && !acceptedRide && (
+                      <button
+                        onClick={simulateIncomingCall}
+                        className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 font-bold px-4 py-2 rounded-xl text-xs transition-colors"
+                      >
+                        Simular Nova Chamada Chegando
+                      </button>
+                    )}
                   </div>
 
-                  <div className="text-xs text-slate-300 space-y-1">
-                    <p>Origem: {acceptedRide.pickup}</p>
-                    <p>Destino: <strong className="text-amber-400">{acceptedRide.dropoff}</strong></p>
-                  </div>
+                  {activeCall && (
+                    <div className="bg-slate-900 border-2 border-amber-500 p-6 rounded-2xl space-y-4 animate-bounce-subtle">
+                      
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                          <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                            NOVA CORRIDA DISPONÍVEL
+                          </span>
+                          {activeCall.category && (
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300">
+                              {activeCall.category}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xl font-black text-white">{activeCall.price}</span>
+                      </div>
 
-                  <InteractiveMap
-                    origin={acceptedRide.pickup}
-                    destination={acceptedRide.dropoff}
-                    status="in_transit"
-                    driverName={driverName}
-                    vehicle={carModel}
-                    etaMinutes={6}
-                    distanceKm={acceptedRide.distance.replace(' km', '')}
-                  />
+                      <div className="space-y-2 text-sm">
+                        <p className="text-slate-300"><strong>Embarque:</strong> {activeCall.pickup}</p>
+                        <p className="text-slate-300"><strong>Desembarque:</strong> <span className="text-amber-400 font-semibold">{activeCall.dropoff}</span></p>
+                        <p className="text-xs text-slate-400">Passageiro: {activeCall.passenger} • Distância: {activeCall.distance}</p>
+                      </div>
 
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleFinishRide}
-                      className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors"
-                    >
-                      Finalizar Viagem e Receber {acceptedRide.price || 'R$ 38,40'} na Carteira
-                    </button>
-                    <button
-                      onClick={() => setShowExceptionModal(true)}
-                      className="px-4 bg-rose-950/60 border border-rose-500/40 text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-900/60"
-                    >
-                      Reportar Emergência/Pane Mecânica
-                    </button>
-                  </div>
+                      <div className="bg-amber-950/80 border border-amber-800 p-3 rounded-xl text-xs text-amber-300 font-medium">
+                        ⚠️ Compromisso da Regra de Ouro: Ao aceitar esta viagem, você se compromete a concluí-la sem cancelamento.
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleAcceptRideCall}
+                          className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg transition-colors text-sm"
+                        >
+                          Aceitar Corrida (Compromisso Assumido)
+                        </button>
+                        <button
+                          onClick={() => setActiveCall(null)}
+                          className="px-6 bg-slate-800 text-slate-400 font-bold rounded-xl text-xs hover:text-white"
+                        >
+                          Recusar Antes de Aceitar
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {acceptedRide && (
+                    <div className="bg-amber-950/60 border border-amber-500/60 p-6 rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-base font-bold text-white flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-amber-400" />
+                          Corrida em Andamento (Regra Aceitou, Levou Ativa)
+                        </h4>
+                        <span className="text-sm font-black text-amber-400">{acceptedRide.price}</span>
+                      </div>
+
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <p>Origem: {acceptedRide.pickup}</p>
+                        <p>Destino: <strong className="text-amber-400">{acceptedRide.dropoff}</strong></p>
+                      </div>
+
+                      <InteractiveMap
+                        origin={acceptedRide.pickup}
+                        destination={acceptedRide.dropoff}
+                        status="in_transit"
+                        driverName={driverName}
+                        vehicle={carModel}
+                        etaMinutes={6}
+                        distanceKm={acceptedRide.distance.replace(' km', '')}
+                      />
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleFinishRide}
+                          className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors"
+                        >
+                          Finalizar Viagem e Receber {acceptedRide.price || 'R$ 38,40'} na Carteira
+                        </button>
+                        <button
+                          onClick={() => setShowExceptionModal(true)}
+                          className="px-4 bg-rose-950/60 border border-rose-500/40 text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-900/60"
+                        >
+                          Reportar Emergência/Pane Mecânica
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!activeCall && !acceptedRide && (
+                    <div className="text-center py-12 text-slate-500 space-y-2">
+                      <Car className="w-12 h-12 mx-auto text-slate-700" />
+                      <p className="text-sm font-medium">Aguardando chamadas de passageiros na sua área...</p>
+                      <p className="text-xs">O radar Rota Nova prioriza motoristas credenciados com nota alta.</p>
+                    </div>
+                  )}
+
                 </div>
-              )}
-
-              {!activeCall && !acceptedRide && (
-                <div className="text-center py-12 text-slate-500 space-y-2">
-                  <Car className="w-12 h-12 mx-auto text-slate-700" />
-                  <p className="text-sm font-medium">Aguardando chamadas de passageiros na sua área...</p>
-                  <p className="text-xs">O radar Rota Nova prioriza motoristas credenciados com nota alta.</p>
-                </div>
-              )}
-
-            </div>
+              </>
+            )}
 
           </div>
         )}

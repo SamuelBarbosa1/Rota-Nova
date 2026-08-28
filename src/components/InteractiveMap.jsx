@@ -30,91 +30,117 @@ export default function InteractiveMap({
   
   const [progress, setProgress] = useState(0);
 
+  // Deterministic coordinate generator for unknown addresses to prevent null/blank maps
+  const getHashCoordinates = (address) => {
+    let hash = 0;
+    const str = (address || '').toLowerCase();
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const latOffset = ((Math.abs(hash) % 1000) / 1000) * 0.12;
+    const lngOffset = ((Math.abs(hash >> 3) % 1000) / 1000) * 0.22;
+    return [-15.75 - latOffset, -47.85 - lngOffset];
+  };
+
   // Helper: Geocoding with static defaults for standard simulation locations to load instantly
   const getCoordinates = async (address) => {
-    if (!address) return null;
+    if (!address) return [-15.7934, -47.8884];
     const clean = address.toLowerCase();
     
     // Quick cache/hardcoded coordinates for default demo locations to avoid network latency and OSRM limits
-    if (clean.includes("eixo monumental") || clean.includes("bloco a")) {
-      return [-15.7934, -47.8884];
-    }
-    if (clean.includes("sol nascente") || clean.includes("chácara 28") || clean.includes("chácara 45") || clean.includes("chácara 12")) {
-      return [-15.8235, -48.1130];
-    }
-    if (clean.includes("rodoviária") || clean.includes("rodoviaria")) {
-      return [-15.7941, -47.8829];
-    }
-    if (clean.includes("samambaia")) {
-      return [-15.8115, -48.0163];
-    }
-    if (clean.includes("indústrias gráficas") || clean.includes("sig")) {
-      return [-15.7981, -47.9126];
-    }
-    if (clean.includes("setor de indústrias")) {
-      return [-15.7981, -47.9126];
-    }
-    if (clean.includes("26 de julho")) {
-      return [-15.8202, -48.0694];
-    }
-    if (clean.includes("riacho fundo 2") || clean.includes("riacho fundo ii")) {
-      return [-15.8906, -48.0645];
-    }
-    if (clean.includes("recanto") || clean.includes("recanto das emas")) {
-      return [-15.9015, -48.0782];
-    }
-    if (clean.includes("taguatinga")) {
-      return [-15.8340, -48.0560];
-    }
-    if (clean.includes("w3")) {
-      return [-15.7998, -47.8967];
-    }
-    if (clean.includes("asa norte")) {
-      return [-15.7635, -47.8860];
-    }
-    if (clean.includes("asa sul")) {
-      return [-15.8118, -47.9022];
-    }
-    if (clean.includes("ceilândia") || clean.includes("ceilandia")) {
-      return [-15.8166, -48.1102];
-    }
+    if (clean.includes("eixo monumental") || clean.includes("bloco a")) return [-15.7934, -47.8884];
+    if (clean.includes("setor hoteleiro norte") || clean.includes("shn")) return [-15.7876, -47.8890];
+    if (clean.includes("setor hoteleiro sul") || clean.includes("shs")) return [-15.7958, -47.8932];
+    if (clean.includes("aeroporto") || clean.includes("jk")) return [-15.8711, -47.9172];
+    if (clean.includes("rodoviária") || clean.includes("rodoviaria")) return [-15.7941, -47.8829];
+    if (clean.includes("indústrias gráficas") || clean.includes("sig") || clean.includes("industrias graficas")) return [-15.7981, -47.9126];
+    if (clean.includes("26 de julho") || clean.includes("vinte e seis de julho")) return [-15.8202, -48.0694];
+    if (clean.includes("sol nascente") || clean.includes("chácara") || clean.includes("chacara")) return [-15.8235, -48.1130];
+    if (clean.includes("samambaia")) return [-15.8115, -48.0163];
+    if (clean.includes("riacho fundo")) return [-15.8906, -48.0645];
+    if (clean.includes("recanto")) return [-15.9015, -48.0782];
+    if (clean.includes("taguatinga")) return [-15.8340, -48.0560];
+    if (clean.includes("w3")) return [-15.7998, -47.8967];
+    if (clean.includes("asa norte")) return [-15.7635, -47.8860];
+    if (clean.includes("asa sul")) return [-15.8118, -47.9022];
+    if (clean.includes("ceilândia") || clean.includes("ceilandia")) return [-15.8166, -48.1102];
+    if (clean.includes("águas claras") || clean.includes("aguas claras")) return [-15.8389, -48.0305];
+    if (clean.includes("vicente pires")) return [-15.8080, -48.0355];
+    if (clean.includes("guará") || clean.includes("guara")) return [-15.8200, -47.9780];
+    if (clean.includes("cruzeiro")) return [-15.7905, -47.9355];
+    if (clean.includes("sobradinho")) return [-15.6515, -47.7892];
+    if (clean.includes("planaltina")) return [-15.6178, -47.6534];
+    if (clean.includes("paranoá") || clean.includes("paranoa")) return [-15.7725, -47.7780];
+    if (clean.includes("gama")) return [-16.0195, -48.0655];
+
+    // Clean address query for Nominatim search (remove special characters like '—')
+    const cleanSearchQuery = address.replace(/[—–-]/g, ' ').replace(/\s+/g, ' ').trim();
 
     // Live Geocode fallback
     try {
-      let query = address;
+      let query = cleanSearchQuery;
       if (!clean.includes("df") && !clean.includes("distrito federal") && !clean.includes("brasília") && !clean.includes("brasilia")) {
-        query = `${address}, Brasília - DF`;
+        query = `${cleanSearchQuery}, Brasília - DF`;
       }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+        signal: controller.signal,
         headers: {
           'Accept-Language': 'pt-BR',
           'User-Agent': 'RotaNova-App/1.0'
         }
       });
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       if (data && data.length > 0) {
         return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
       }
     } catch (e) {
-      console.error("Geocoding failed for: " + address, e);
+      console.warn("Geocoding failed for: " + address + ". Using hash fallback.");
     }
-    return null;
+    return getHashCoordinates(address);
+  };
+
+  // Generate smooth arc path between 2 points if network route is unavailable
+  const generateArcPath = (start, end, numPoints = 15) => {
+    const coords = [];
+    const midLat = (start[0] + end[0]) / 2 + 0.004;
+    const midLng = (start[1] + end[1]) / 2 - 0.004;
+    
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      // Quadratic Bezier curve
+      const lat = (1 - t) * (1 - t) * start[0] + 2 * (1 - t) * t * midLat + t * t * end[0];
+      const lng = (1 - t) * (1 - t) * start[1] + 2 * (1 - t) * t * midLng + t * t * end[1];
+      coords.push([lat, lng]);
+    }
+    return coords;
   };
 
   // Helper: Fetch real driving route from OSRM
   const fetchOSRMRoute = async (start, end) => {
+    if (!start || !end) return [];
     try {
-      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       if (data && data.routes && data.routes.length > 0) {
-        // Map from OSRM [lon, lat] to Leaflet [lat, lon]
         return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
       }
     } catch (e) {
-      console.error("OSRM Route fetching failed", e);
+      console.warn("OSRM Route fetching failed. Using generated arc route.");
     }
-    // Fallback to straight line
-    return [start, end];
+    return generateArcPath(start, end);
   };
 
   // 1. Initialize Map Instance
@@ -157,30 +183,38 @@ export default function InteractiveMap({
 
   // 2. Fetch coordinates independently when origin or destination changes
   useEffect(() => {
+    let isMounted = true;
     const resolveAddresses = async () => {
       const originPt = await getCoordinates(origin);
-      if (originPt) setOriginCoords(originPt);
-
       const destPt = await getCoordinates(destination);
-      if (destPt) setDestCoords(destPt);
+      if (isMounted) {
+        setOriginCoords(originPt);
+        setDestCoords(destPt);
+      }
     };
     resolveAddresses();
+    return () => { isMounted = false; };
   }, [origin, destination]);
 
   // 3. Fetch OSRM route when coordinate states are both resolved/updated
   useEffect(() => {
+    let isMounted = true;
     const loadRoute = async () => {
       if (originCoords && destCoords) {
         const mainRoute = await fetchOSRMRoute(originCoords, destCoords);
-        setRouteCoords(mainRoute);
-
+        
         // Mock an arrival route for the driver to reach the origin
         const driverStartPoint = [originCoords[0] + 0.008, originCoords[1] - 0.008];
         const arrivalRoute = await fetchOSRMRoute(driverStartPoint, originCoords);
-        setArrivalCoords(arrivalRoute);
+        
+        if (isMounted) {
+          setRouteCoords(mainRoute);
+          setArrivalCoords(arrivalRoute);
+        }
       }
     };
     loadRoute();
+    return () => { isMounted = false; };
   }, [originCoords, destCoords]);
 
   // 3. Render and Update markers and polyline paths on coordinate changes
@@ -264,10 +298,23 @@ export default function InteractiveMap({
       }).addTo(map);
 
       // Adjust map view to center the route beautifully
-      map.fitBounds(routePolylineRef.current.getBounds(), {
-        padding: [50, 50],
-        maxZoom: 14
-      });
+      try {
+        const bounds = routePolylineRef.current.getBounds();
+        if (bounds && bounds.isValid()) {
+          map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 14
+          });
+        }
+      } catch (e) {
+        console.warn("fitBounds failed gracefully", e);
+      }
+
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 150);
     }
 
     // Draw arrival route polyline (only for simulation state)

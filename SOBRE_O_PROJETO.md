@@ -20,16 +20,21 @@ Diferente de outras plataformas, o Rota Nova opera sob uma premissa clara e ineg
 
 ### 🚗 1. Para o Passageiro (Cliente)
 * **Chamada Sem Restrições:** Digitação livre de endereços, aceitando referências populares locais (Ex: *Sol Nascente, Trecho 3, Chácara 28*, *Riacho Fundo 2*, *W3*, *Taguatinga Centro*).
-* **Categorias de Viagem:**
-  * **Rota Nova Pop:** Carros econômicos e compactos para o dia a dia.
-  * **Rota Nova Comfort:** Veículos sedans/SUVs com ar-condicionado reforçado.
-  * **Rota Nova XL:** Veículos espaçosos para até 6 passageiros ou bagagens volumosas.
+* **Modalidades de Viagem VIA:**
+  * **VIA GO:** Econômico inteligente para o dia a dia.
+  * **VIA PLUS:** Mais conforto em sedans e carros espaçosos.
+  * **VIA ECO:** Sustentável e tecnológico com veículos elétricos e híbridos.
+  * **VIA DELAS:** Atendimento exclusivo conduzido por motoristas mulheres.
+  * **VIA BLACK:** Executivo premium com carros pretos de alto padrão.
+  * **VIA PRIME:** Luxo e experiência VIP com serviço exclusivo.
+  * **VIA BOX:** Mercado e entregas ágeis para caixas e encomendas.
+  * **VIA PET:** Mobilidade pet friendly com veículos adaptados.
 * **Mapa Interativo em Modo Escuro:** Visualização em tempo real do trajeto traçado pelas ruas (via Leaflet + OpenStreetMap + OSRM), sem marcas d'água de API.
 * **Simulador Realista de Trajeto:** Acompanhamento do deslocamento do carro quadro a quadro durante a rota.
 * **Cancelamento Flexível:** Possibilidade de cancelar a chamada antes do embarque para redefinir o endereço ou trocar a categoria sem travar o aplicativo.
 * **Dashboard Financeiro do Cliente:**
   * Total gasto acumulado calculado automaticamente.
-  * Distribuição percentual de gastos por categoria (Pop, Comfort, XL).
+  * Distribuição percentual de gastos por modalidade VIA.
   * Gerenciamento de locais favoritos com atalho rápido para pedidos.
   * Histórico detalhado de viagens e comprovantes com geração de recibo.
 * **Sistema de Avaliação:** Envio de nota de 1 a 5 estrelas e comentários pós-corrida.

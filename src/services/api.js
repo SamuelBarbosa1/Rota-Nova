@@ -45,7 +45,7 @@ export const RideService = {
       destination_address: destination.address,
       destination_lat: destination.lat,
       destination_lng: destination.lng,
-      category, // 'pop' | 'comfort' | 'xl'
+      category, // 'via_go' | 'via_plus' | 'via_eco' | 'via_delas' | 'via_black' | 'via_prime' | 'via_box' | 'via_pet'
       price,
       payment_method: paymentMethod,
       requested_at: new Date().toISOString()
@@ -69,8 +69,8 @@ export const RideService = {
           pickup: 'Sol Nascente, Trecho 3, Chácara 28',
           dropoff: 'Taguatinga Centro — Praça do Relógio',
           distance: '6.8 km',
-          price: 'R$ 28,50',
-          category: 'Rota Nova Pop',
+          price: 'R$ 22,50',
+          category: 'VIA GO',
           clientName: 'Juliana Mendes',
           clientRating: 4.95
         }

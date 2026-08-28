@@ -42,6 +42,9 @@ export default function Footer() {
                 <Link to="/regras" className="hover:text-amber-400 transition-colors">Regras Antibloqueio e Exceções</Link>
               </li>
               <li>
+                <Link to="/investidor" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">Portal do Investidor & Apoiador</Link>
+              </li>
+              <li>
                 <Link to="/admin" className="text-purple-400 hover:text-purple-300 font-bold transition-colors">Painel Administrativo (Gestão)</Link>
               </li>
             </ul>

@@ -4,7 +4,8 @@ import AuthModal from '../components/AuthModal';
 import { 
   User, MapPin, Navigation, Car, ShieldCheck, Clock, CreditCard, 
   CheckCircle2, Star, Download, Sparkles, AlertCircle, History, Send, 
-  TrendingUp, DollarSign, Heart, Bookmark, Plus, FileText, ArrowRight, Lock 
+  TrendingUp, DollarSign, Heart, Bookmark, Plus, FileText, ArrowRight, Lock,
+  Zap, Leaf, Crown, Package, Dog
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
 
@@ -31,7 +32,7 @@ export default function Cliente() {
   // Ride Request state
   const [origin, setOrigin] = useState('Eixo Monumental, Bloco A — Brasília, DF');
   const [destination, setDestination] = useState('Sol Nascente, Trecho 3, Chácara 28 (Estrada de Chão) — DF');
-  const [selectedCategory, setSelectedCategory] = useState('pop');
+  const [selectedCategory, setSelectedCategory] = useState('via_go');
   const [paymentMethod, setPaymentMethod] = useState('pix');
 
   // Live Ride Simulation
@@ -55,16 +56,111 @@ export default function Cliente() {
     }
   }, [currentUser]);
 
-  const totalSpentCalculated = tripHistory.reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const categories = [
+    {
+      id: 'via_go',
+      name: 'VIA GO',
+      tagline: 'Econômico inteligente',
+      desc: 'Carros compactos e super econômicos para o dia a dia',
+      price: 22.50,
+      eta: '3 min',
+      icon: Zap,
+      badge: 'Econômico',
+      badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+    },
+    {
+      id: 'via_plus',
+      name: 'VIA PLUS',
+      tagline: 'Mais conforto',
+      desc: 'Sedans e hatches espaçosos com ar-condicionado forte',
+      price: 29.90,
+      eta: '2 min',
+      icon: Car,
+      badge: 'Conforto',
+      badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+    },
+    {
+      id: 'via_eco',
+      name: 'VIA ECO',
+      tagline: 'Sustentável e tecnológico',
+      desc: 'Veículos elétricos e híbridos de baixíssima emissão',
+      price: 32.50,
+      eta: '4 min',
+      icon: Leaf,
+      badge: 'Ecológico',
+      badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+    },
+    {
+      id: 'via_delas',
+      name: 'VIA DELAS',
+      tagline: 'Exclusiva',
+      desc: 'Modalidade conduzida por motoristas mulheres parceiras',
+      price: 29.90,
+      eta: '3 min',
+      icon: Heart,
+      badge: 'Para Elas',
+      badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+    },
+    {
+      id: 'via_black',
+      name: 'VIA BLACK',
+      tagline: 'Executivo premium',
+      desc: 'Carros executivos pretos com ar dual zone e condutores 5 estrelas',
+      price: 44.00,
+      eta: '4 min',
+      icon: Crown,
+      badge: 'Executivo',
+      badgeBg: 'bg-slate-700/50 text-slate-200 border-slate-600'
+    },
+    {
+      id: 'via_prime',
+      name: 'VIA PRIME',
+      tagline: 'Luxo e experiência VIP',
+      desc: 'Carros de alto luxo, água cortesia e atendimento VIP exclusivo',
+      price: 65.00,
+      eta: '5 min',
+      icon: Sparkles,
+      badge: 'VIP Luxo',
+      badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+    },
+    {
+      id: 'via_box',
+      name: 'VIA BOX',
+      tagline: 'Mercado e entregas',
+      desc: 'Transporte dedicado de compras de mercado, caixas e encomendas',
+      price: 21.00,
+      eta: '4 min',
+      icon: Package,
+      badge: 'Entregas',
+      badgeBg: 'bg-amber-600/20 text-amber-400 border-amber-600/30'
+    },
+    {
+      id: 'via_pet',
+      name: 'VIA PET',
+      tagline: 'Mobilidade pet friendly',
+      desc: 'Veículos preparados com mantas especiais para seu pet',
+      price: 34.50,
+      eta: '5 min',
+      icon: Dog,
+      badge: 'Pet Friendly',
+      badgeBg: 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+    }
+  ];
 
-  const popSpentCalculated = tripHistory.filter(t => t.category?.includes('Pop')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
-  const comfortSpentCalculated = tripHistory.filter(t => t.category?.includes('Comfort')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
-  const xlSpentCalculated = tripHistory.filter(t => t.category?.includes('XL')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const parsePrice = (priceVal) => {
+    if (typeof priceVal === 'number') return priceVal;
+    if (!priceVal) return 0;
+    const cleanStr = String(priceVal).replace(/[^\d.,]/g, '').replace(',', '.');
+    return parseFloat(cleanStr) || 0;
+  };
 
-  const totalCatSpent = popSpentCalculated + comfortSpentCalculated + xlSpentCalculated;
-  const popPct = totalCatSpent > 0 ? Math.round((popSpentCalculated / totalCatSpent) * 100) : 0;
-  const comfortPct = totalCatSpent > 0 ? Math.round((comfortSpentCalculated / totalCatSpent) * 100) : 0;
-  const xlPct = totalCatSpent > 0 ? Math.round((xlSpentCalculated / totalCatSpent) * 100) : 0;
+  const totalSpentCalculated = tripHistory.reduce((acc, t) => acc + parsePrice(t.price), 0);
+
+  const getCategorySpent = (catName) => {
+    return tripHistory
+      .filter(t => t.category && t.category.toLowerCase().includes(catName.toLowerCase()))
+      .reduce((acc, t) => acc + parsePrice(t.price), 0);
+  };
 
   const handleAddFavorite = (e) => {
     e.preventDefault();
@@ -78,30 +174,6 @@ export default function Cliente() {
     setNewFavName('');
     setNewFavAddress('');
   };
-
-  const categories = [
-    {
-      id: 'pop',
-      name: 'Rota Nova Pop',
-      desc: 'Carros compactos e muito econômicos',
-      price: 24.50,
-      eta: '3 min'
-    },
-    {
-      id: 'comfort',
-      name: 'Rota Nova Comfort',
-      desc: 'Sedans novos com ar-condicionado reforçado',
-      price: 31.90,
-      eta: '2 min'
-    },
-    {
-      id: 'xl',
-      name: 'Rota Nova XL',
-      desc: 'Até 6 passageiros ou malas volumosas',
-      price: 42.00,
-      eta: '5 min'
-    }
-  ];
 
   // GATEKEEPER LOCK SCREEN IF UNAUTHENTICATED OR NOT A CLIENT
   if (!currentUser || currentUser.role !== 'cliente') {
@@ -190,7 +262,7 @@ export default function Cliente() {
         destination: destination,
         price: priceVal,
         driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
-        category: categories.find(c => c.id === selectedCategory)?.name || 'Rota Nova Pop',
+        category: categories.find(c => c.id === selectedCategory)?.name || 'VIA GO',
         status: 'Concluída'
       };
       setTripHistory(prev => [newTrip, ...prev]);
@@ -337,33 +409,49 @@ export default function Cliente() {
 
                   {/* Categories */}
                   <div className="space-y-2 pt-1">
-                    <label className="block text-xs font-semibold text-slate-400">Selecione a Categoria</label>
-                    <div className="space-y-2">
-                      {categories.map((cat) => (
-                        <div
-                          key={cat.id}
-                          onClick={() => rideStatus === 'idle' && setSelectedCategory(cat.id)}
-                          className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                            selectedCategory === cat.id
-                              ? 'bg-amber-950/60 border-amber-500 text-white'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`p-2 rounded-lg ${selectedCategory === cat.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-                              <Car className="w-4 h-4" />
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-300">Selecione a Modalidade VIA</label>
+                      <span className="text-[10px] text-amber-400 font-semibold">8 Opções Disponíveis</span>
+                    </div>
+                    <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                      {categories.map((cat) => {
+                        const IconComp = cat.icon || Car;
+                        const isSelected = selectedCategory === cat.id;
+                        return (
+                          <div
+                            key={cat.id}
+                            onClick={() => rideStatus === 'idle' && setSelectedCategory(cat.id)}
+                            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-amber-950/60 border-amber-500 text-white shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3.5">
+                              <div className={`p-2.5 rounded-xl border shrink-0 ${isSelected ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800/80 text-amber-400 border-slate-700'}`}>
+                                <IconComp className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <p className="text-xs font-black text-white tracking-wide">{cat.name}</p>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${cat.badgeBg}`}>
+                                    {cat.badge}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] font-semibold text-amber-400/90 mt-0.5">{cat.tagline}</p>
+                                <p className="text-[10px] text-slate-400 line-clamp-1">{cat.desc}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs font-bold">{cat.name}</p>
-                              <p className="text-[10px] text-slate-400">{cat.desc}</p>
+                            <div className="text-right shrink-0 pl-2">
+                              <p className="text-sm font-black text-amber-400">R$ {cat.price.toFixed(2)}</p>
+                              <p className="text-[10px] text-slate-400 flex items-center justify-end gap-1 mt-0.5">
+                                <Clock className="w-3 h-3 text-slate-500" />
+                                {cat.eta}
+                              </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-black text-amber-400">R$ {cat.price.toFixed(2)}</p>
-                            <p className="text-[10px] text-slate-400">{cat.eta}</p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -499,36 +587,26 @@ export default function Cliente() {
                   Distribuição de Gastos por Categoria
                 </h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>Rota Nova Pop (Econômico)</span>
-                      <span>R$ {popSpentCalculated.toFixed(2).replace('.', ',')} ({popPct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-3">
-                      <div className="bg-amber-500 h-3 rounded-full transition-all duration-500" style={{ width: `${popPct}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>Rota Nova Comfort (Sedan/SUV)</span>
-                      <span>R$ {comfortSpentCalculated.toFixed(2).replace('.', ',')} ({comfortPct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-3">
-                      <div className="bg-amber-400 h-3 rounded-full transition-all duration-500" style={{ width: `${comfortPct}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>Rota Nova XL (Até 6 Passageiros)</span>
-                      <span>R$ {xlSpentCalculated.toFixed(2).replace('.', ',')} ({xlPct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-3">
-                      <div className="bg-amber-600 h-3 rounded-full transition-all duration-500" style={{ width: `${xlPct}%` }}></div>
-                    </div>
-                  </div>
+                <div className="space-y-3.5 max-h-[320px] overflow-y-auto pr-1">
+                  {categories.map((cat) => {
+                    const spent = getCategorySpent(cat.name);
+                    const pct = totalSpentCalculated > 0 ? Math.round((spent / totalSpentCalculated) * 100) : 0;
+                    const IconComp = cat.icon || Car;
+                    return (
+                      <div key={cat.id} className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-bold text-slate-300">
+                          <span className="flex items-center gap-1.5">
+                            <IconComp className="w-3.5 h-3.5 text-amber-400" />
+                            {cat.name} <span className="text-[10px] text-slate-400 font-normal">({cat.tagline})</span>
+                          </span>
+                          <span className="text-amber-400 font-black">R$ {spent.toFixed(2).replace('.', ',')} ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-slate-900 rounded-full h-2.5 border border-slate-800">
+                          <div className="bg-gradient-to-r from-amber-500 to-amber-400 h-2.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

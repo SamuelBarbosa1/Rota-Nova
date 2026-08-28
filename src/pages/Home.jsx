@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import { 
   Car, ShieldCheck, UserCheck, CheckCircle2, ArrowRight, MapPin, 
-  Sparkles, ShieldAlert, Award, Star, ThumbsUp, Users, Compass, Lock 
+  Sparkles, ShieldAlert, Award, Star, ThumbsUp, Users, Compass, Lock,
+  Zap, Leaf, Heart, Crown, Package, Dog, DollarSign, TrendingUp
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
 
@@ -16,8 +17,92 @@ export default function Home() {
 
   const [quickOrigin, setQuickOrigin] = useState("Eixo Monumental, Bloco A — Brasília, DF");
   const [quickDest, setQuickDest] = useState("Sol Nascente, Trecho 3 (Estrada de Terra) — DF");
-  const [estimatedPrice, setEstimatedPrice] = useState(24.50);
+  const [selectedViaCat, setSelectedViaCat] = useState('via_go');
+  const [estimatedPrice, setEstimatedPrice] = useState(22.50);
   const [isCalculated, setIsCalculated] = useState(false);
+
+  const viaCategories = [
+    {
+      id: 'via_go',
+      name: 'VIA GO',
+      tagline: 'Econômico inteligente',
+      desc: 'Carros compactos e preço acessível para o dia a dia.',
+      multiplier: 1.0,
+      icon: Zap,
+      badge: 'Econômico',
+      color: 'amber'
+    },
+    {
+      id: 'via_plus',
+      name: 'VIA PLUS',
+      tagline: 'Mais conforto',
+      desc: 'Sedans e carros novos com mais espaço e ar potente.',
+      multiplier: 1.3,
+      icon: Car,
+      badge: 'Conforto',
+      color: 'blue'
+    },
+    {
+      id: 'via_eco',
+      name: 'VIA ECO',
+      tagline: 'Sustentável e tecnológico',
+      desc: 'Veículos elétricos e híbridos de baixa emissão.',
+      multiplier: 1.45,
+      icon: Leaf,
+      badge: 'Ecológico',
+      color: 'emerald'
+    },
+    {
+      id: 'via_delas',
+      name: 'VIA DELAS',
+      tagline: 'Exclusiva',
+      desc: 'Viagens exclusivas conduzidas por motoristas mulheres.',
+      multiplier: 1.3,
+      icon: Heart,
+      badge: 'Para Elas',
+      color: 'rose'
+    },
+    {
+      id: 'via_black',
+      name: 'VIA BLACK',
+      tagline: 'Executivo premium',
+      desc: 'Frota executiva escura com motoristas top de linha.',
+      multiplier: 1.9,
+      icon: Crown,
+      badge: 'Executivo',
+      color: 'slate'
+    },
+    {
+      id: 'via_prime',
+      name: 'VIA PRIME',
+      tagline: 'Luxo e experiência VIP',
+      desc: 'Experiência VIP com carros de alto luxo e diferenciais.',
+      multiplier: 2.8,
+      icon: Sparkles,
+      badge: 'VIP Luxo',
+      color: 'purple'
+    },
+    {
+      id: 'via_box',
+      name: 'VIA BOX',
+      tagline: 'Mercado e entregas',
+      desc: 'Transporte seguro de compras, malotes e encomendas.',
+      multiplier: 0.95,
+      icon: Package,
+      badge: 'Entregas',
+      color: 'orange'
+    },
+    {
+      id: 'via_pet',
+      name: 'VIA PET',
+      tagline: 'Mobilidade pet friendly',
+      desc: 'Veículos equipados com capas para viajar com seu pet.',
+      multiplier: 1.5,
+      icon: Dog,
+      badge: 'Pet Friendly',
+      color: 'teal'
+    }
+  ];
 
   const openAuth = (role) => {
     if (currentUser) {
@@ -31,8 +116,9 @@ export default function Home() {
   const handleQuickEstimate = (e) => {
     e.preventDefault();
     if (quickOrigin && quickDest) {
+      const catObj = viaCategories.find(c => c.id === selectedViaCat) || viaCategories[0];
       const base = 12.0;
-      const calc = base + (quickOrigin.length + quickDest.length) * 0.35;
+      const calc = (base + (quickOrigin.length + quickDest.length) * 0.25) * catObj.multiplier;
       setEstimatedPrice(calc.toFixed(2));
       setIsCalculated(true);
     }
@@ -150,28 +236,49 @@ export default function Home() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">Modalidade VIA Desejada</label>
+                    <div className="relative">
+                      <select
+                        value={selectedViaCat}
+                        onChange={(e) => setSelectedViaCat(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500 appearance-none cursor-pointer font-medium"
+                      >
+                        {viaCategories.map(cat => (
+                          <option key={cat.id} value={cat.id} className="bg-slate-900 text-white">
+                            {cat.name} — {cat.tagline}
+                          </option>
+                        ))}
+                      </select>
+                      <Car className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-3 rounded-xl border border-amber-500/30 transition-all text-sm"
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-amber-500/20"
                   >
-                    Calcular Estimativa de Valor
+                    Calcular Estimativa da Corrida
                   </button>
                 </form>
 
                 {isCalculated && (
-                  <div className="bg-amber-950/60 border border-amber-800/80 p-4 rounded-xl space-y-2 animate-fadeIn">
+                  <div className="bg-amber-950/60 border border-amber-800/80 p-4 rounded-2xl space-y-2 animate-fadeIn">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-300">Estimativa Rota Nova Padrão:</span>
-                      <span className="text-xl font-black text-amber-400">R$ {estimatedPrice}</span>
+                      <div>
+                        <span className="text-xs text-slate-300 block">Estimativa {viaCategories.find(c=>c.id===selectedViaCat)?.name}:</span>
+                        <span className="text-[10px] text-amber-400 font-medium">{viaCategories.find(c=>c.id===selectedViaCat)?.tagline}</span>
+                      </div>
+                      <span className="text-2xl font-black text-amber-400">R$ {estimatedPrice}</span>
                     </div>
-                    <p className="text-[11px] text-slate-400">
-                      Garantia Rota Nova: O motorista que aceitar esta viagem não poderá cancelar por motivo de rua ou bairro.
+                    <p className="text-[11px] text-slate-400 border-t border-amber-900/50 pt-2">
+                      Garantia Rota Nova: Sem cancelamento indevido. O motorista leva você até o ponto final selecionado.
                     </p>
                     <button
                       onClick={() => openAuth('cliente')}
-                      className="w-full text-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg text-xs transition-colors mt-2"
+                      className="w-full text-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors mt-2 shadow-md"
                     >
-                      Criar Conta e Chamar Motorista
+                      Criar Conta e Chamar {viaCategories.find(c=>c.id===selectedViaCat)?.name}
                     </button>
                   </div>
                 )}
@@ -180,6 +287,147 @@ export default function Home() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* 1.5 VIA MODALITIES SHOWCASE SECTION */}
+      <section className="py-20 bg-slate-950 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/20">
+              Frota & Versões Disponíveis
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Mobilidade Sob Medida para Qualquer Momento</h2>
+            <p className="text-slate-400 text-base">
+              Escolha a opção VIA ideal para o seu perfil: de corridas hiper econômicas até entregas, transporte pet friendly e carros executivos VIP.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {viaCategories.map((cat) => {
+              const IconComponent = cat.icon || Car;
+              return (
+                <div key={cat.id} className="glass-panel p-6 rounded-3xl border border-slate-800 hover:border-amber-500/50 transition-all duration-300 group flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <IconComponent className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 text-amber-400">
+                        {cat.badge}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-black text-white">{cat.name}</h3>
+                      <p className="text-xs font-bold text-amber-400/90 mt-0.5">{cat.tagline}</p>
+                    </div>
+
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      {cat.desc}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">Mul. Tarifa: <strong className="text-slate-200">{cat.multiplier}x</strong></span>
+                    <button
+                      onClick={() => openAuth('cliente')}
+                      className="text-xs font-bold text-amber-400 group-hover:translate-x-1 transition-transform flex items-center gap-1"
+                    >
+                      <span>Pedir</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 1.8 PAINEL PÚBLICO DE TRANSPARÊNCIA & INDICADORES AO VIVO */}
+      <section className="py-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20">
+              ● Transparência em Tempo Real
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Resultados & Indicadores de Impacto</h2>
+            <p className="text-slate-400 text-base">
+              Acompanhe ao vivo a expansão da comunidade Rota Nova: movimentação financeira diária, número de passageiros e motoristas validados.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400">Usuários Cadastrados</span>
+                <Users className="w-5 h-5 text-amber-400" />
+              </div>
+              <p className="text-3xl font-black text-white">292.526</p>
+              <p className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                <span>+5 novos cadastros hoje</span>
+              </p>
+            </div>
+
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400">Vendas / Volume Diário</span>
+                <DollarSign className="w-5 h-5 text-emerald-400" />
+              </div>
+              <p className="text-3xl font-black text-white">R$ 1.766,71</p>
+              <p className="text-[11px] text-slate-400 font-medium">
+                R$ 3.068.722,58 acumulado total
+              </p>
+            </div>
+
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400">Motoristas Qualificados</span>
+                <UserCheck className="w-5 h-5 text-amber-400" />
+              </div>
+              <p className="text-3xl font-black text-white">3.840</p>
+              <p className="text-[11px] text-amber-300 font-medium">
+                100% com entrevista de conduta
+              </p>
+            </div>
+
+            <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400">Taxa de Conclusão</span>
+                <Award className="w-5 h-5 text-purple-400" />
+              </div>
+              <p className="text-3xl font-black text-white">100%</p>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Sem recusa por bairro ou ladeira
+              </p>
+            </div>
+
+          </div>
+
+          {/* CALL TO ACTION FOR INVESTORS & SUPPORTERS */}
+          <div className="glass-panel p-8 rounded-3xl border border-amber-500/40 bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+            <div className="space-y-2 text-center md:text-left">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Quer fazer parte da evolução?</span>
+              <h3 className="text-2xl font-black text-white">Acesse o Portal do Investidor e Apoiador</h3>
+              <p className="text-xs text-slate-300 max-w-xl">
+                Acompanhe o relatório completo de métricas financeiras, linha do tempo de atualizações e oportunidades de co-investimento.
+              </p>
+            </div>
+
+            <Link
+              to="/investidor"
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-4 rounded-xl shadow-xl shadow-amber-500/20 text-xs transition-all whitespace-nowrap flex items-center space-x-2 shrink-0"
+            >
+              <span>Acessar Portal do Investidor</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
         </div>
       </section>
 

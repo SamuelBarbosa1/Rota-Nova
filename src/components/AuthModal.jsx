@@ -1,78 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Car, X, ArrowRight, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
+import { User, Car, X, ArrowRight, ShieldCheck, CheckCircle2, Lock, TrendingUp, LogIn, UserPlus } from 'lucide-react';
 
-export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) {
-  const { loginAsCliente, loginAsMotorista, loginAsAdmin } = useAuth();
+export default function AuthModal({ isOpen, onClose, initialRole = 'cliente', initialMode = 'login' }) {
+  const { loginAsCliente, loginAsMotorista, loginAsAdmin, loginAsInvestidor } = useAuth();
   const navigate = useNavigate();
-  const [role, setRole] = useState(initialRole); // 'cliente' | 'motorista'
-  const [isRegister, setIsRegister] = useState(true);
+  
+  const [isRegister, setIsRegister] = useState(initialMode === 'register');
+  const [role, setRole] = useState(initialRole); // 'cliente' | 'motorista' | 'investidor'
 
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [carModel, setCarModel] = useState('');
   const [carPlate, setCarPlate] = useState('');
+  const [investorType, setInvestorType] = useState('Investidor Anjo / Apoiador');
+  const [company, setCompany] = useState('');
 
-  // Pre-populate form fields when role changes or modal opens, using saved localStorage profiles
   useEffect(() => {
     if (!isOpen) return;
-    
-    if (role === 'cliente') {
-      const saved = localStorage.getItem('rotanova_cliente_user');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setName(parsed.name || '');
-          setEmail(parsed.email || '');
-          setPhone(parsed.phone || '');
-          setIsRegister(false); // Default to login if profile already exists
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        setName('');
-        setEmail('');
-        setPhone('');
-        setIsRegister(true);
-      }
-    } else {
-      const saved = localStorage.getItem('rotanova_motorista_user');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setName(parsed.name || '');
-          setEmail(parsed.email || '');
-          setPhone(parsed.phone || '');
-          setCarModel(parsed.driverData?.carModel || '');
-          setCarPlate(parsed.driverData?.carPlate || '');
-          setIsRegister(false); // Default to login
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        setName('');
-        setEmail('');
-        setPhone('');
-        setCarModel('');
-        setCarPlate('');
-        setIsRegister(true);
-      }
-    }
-  }, [role, isOpen]);
+    setRole(initialRole);
+  }, [initialRole, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (role === 'cliente') {
-      loginAsCliente({ name, email, phone, isDemo: false });
+      loginAsCliente({ name: name || 'Passageiro Rota Nova', email, phone, isDemo: false });
       navigate('/cliente');
-    } else {
-      loginAsMotorista({ name, email, phone, carModel, carPlate, isDemo: false });
+    } else if (role === 'motorista') {
+      loginAsMotorista({ name: name || 'Motorista Parceiro', email, phone, carModel, carPlate, isDemo: false });
       navigate('/motorista');
+    } else if (role === 'investidor') {
+      loginAsInvestidor({ name: name || 'Investidor Apoiador', email, phone, investorType, company, isDemo: false });
+      navigate('/investidor');
     }
     onClose();
   };
@@ -86,6 +51,12 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
   const handleQuickDemoDriver = () => {
     loginAsMotorista({ isDemo: true });
     navigate('/motorista');
+    onClose();
+  };
+
+  const handleQuickDemoInvestor = () => {
+    loginAsInvestidor({ isDemo: true });
+    navigate('/investidor');
     onClose();
   };
 
@@ -109,59 +80,107 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
 
         {/* Modal Header */}
         <div className="text-center space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Acesso Rota Nova</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Sistema Rota Nova</span>
           <h2 className="text-2xl sm:text-3xl font-black text-white">
             {isRegister ? 'Criar sua conta' : 'Entrar na sua conta'}
           </h2>
-          <p className="text-xs text-slate-400">Escolha o seu perfil para acessar o seu Dashboard exclusivo.</p>
+          <p className="text-xs text-slate-400">
+            {isRegister 
+              ? 'Preencha os campos abaixo para se cadastrar na plataforma.' 
+              : 'Digite suas credenciais registradas para acessar seu Dashboard.'}
+          </p>
         </div>
 
-        {/* Profile Selector Tabs */}
-        <div className="grid grid-cols-2 gap-3 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+        {/* DUAL MODE TOGGLE (LOGIN vs CADASTRO) */}
+        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
           <button
             type="button"
-            onClick={() => setRole('cliente')}
-            className={`py-3 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center space-x-2 ${
-              role === 'cliente'
+            onClick={() => setIsRegister(false)}
+            className={`py-3 rounded-xl font-black transition-all flex items-center justify-center space-x-2 ${
+              !isRegister
                 ? 'bg-amber-500 text-slate-950 shadow-lg'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <User className="w-4 h-4" />
-            <span>Perfil Cliente</span>
+            <LogIn className="w-4 h-4" />
+            <span>Já tenho conta (Login)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsRegister(true)}
+            className={`py-3 rounded-xl font-black transition-all flex items-center justify-center space-x-2 ${
+              isRegister
+                ? 'bg-amber-500 text-slate-950 shadow-lg'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Criar Nova Conta</span>
+          </button>
+        </div>
+
+        {/* PROFILE ROLE SELECTOR TABS */}
+        <div className="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setRole('cliente')}
+            className={`py-2.5 rounded-xl font-extrabold transition-all flex items-center justify-center space-x-1 ${
+              role === 'cliente'
+                ? 'bg-slate-800 text-amber-400 border border-amber-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Passageiro</span>
           </button>
 
           <button
             type="button"
             onClick={() => setRole('motorista')}
-            className={`py-3 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center space-x-2 ${
+            className={`py-2.5 rounded-xl font-extrabold transition-all flex items-center justify-center space-x-1 ${
               role === 'motorista'
-                ? 'bg-amber-500 text-slate-950 shadow-lg'
+                ? 'bg-slate-800 text-amber-400 border border-amber-500/40'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Car className="w-4 h-4" />
-            <span>Perfil Motorista</span>
+            <Car className="w-3.5 h-3.5" />
+            <span>Motorista</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setRole('investidor')}
+            className={`py-2.5 rounded-xl font-extrabold transition-all flex items-center justify-center space-x-1 ${
+              role === 'investidor'
+                ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Investidor</span>
           </button>
         </div>
 
-        {/* Form */}
+        {/* DYNAMIC FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Nome Completo</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={role === 'cliente' ? 'Ex: Ana Maria' : 'Ex: Carlos Eduardo'}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
-              required
-            />
-          </div>
+          {isRegister && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Nome Completo</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={role === 'cliente' ? 'Ex: Ana Maria' : role === 'motorista' ? 'Ex: Carlos Eduardo' : 'Ex: Alexandre Prado'}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                required={isRegister}
+              />
+            </div>
+          )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">E-mail</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">E-mail de Acesso</label>
             <input
               type="email"
               value={email}
@@ -172,19 +191,35 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Telefone / WhatsApp</label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="(11) 90000-0000"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
-              required
-            />
-          </div>
+          {!isRegister && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                required={!isRegister}
+              />
+            </div>
+          )}
 
-          {role === 'motorista' && (
+          {isRegister && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Telefone / WhatsApp</label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(61) 90000-0000"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                required={isRegister}
+              />
+            </div>
+          )}
+
+          {isRegister && role === 'motorista' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1">Modelo do Veículo</label>
@@ -211,6 +246,34 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
             </div>
           )}
 
+          {isRegister && role === 'investidor' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Perfil de Apoio</label>
+                <select
+                  value={investorType}
+                  onChange={(e) => setInvestorType(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Investidor Anjo / Apoiador">Investidor Anjo / Apoiador</option>
+                  <option value="Fundo de Investimento">Fundo de Investimento</option>
+                  <option value="Parceiro Estratégico">Parceiro Estratégico</option>
+                  <option value="Apoiador da Comunidade">Apoiador da Comunidade</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Fundo / Empresa (Opcional)</label>
+                <input
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="Ex: Prado Capital"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 transition-all text-sm flex items-center justify-center space-x-2"
@@ -220,30 +283,13 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
           </button>
         </form>
 
-        {/* Quick Demo Accounts Switcher */}
-        <div className="pt-2 border-t border-slate-800 text-center space-y-2.5">
-          <p className="text-[11px] text-slate-400">Ou entre direto com uma conta de demonstração:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={handleQuickDemoClient}
-              className="bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/30 text-xs font-bold py-2 px-2 rounded-xl transition-colors"
-            >
-              Demo Cliente
-            </button>
-            <button
-              onClick={handleQuickDemoDriver}
-              className="bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 text-xs font-bold py-2 px-2 rounded-xl transition-colors"
-            >
-              Demo Motorista
-            </button>
-          </div>
-
+        {/* LINK TOGGLE LOGIN / REGISTER */}
+        <div className="text-center pt-2 border-t border-slate-800/80">
           <button
-            onClick={handleQuickDemoAdmin}
-            className="w-full bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/40 text-xs font-bold py-2.5 rounded-xl transition-all flex items-center justify-center space-x-2"
+            onClick={() => setIsRegister(!isRegister)}
+            className="text-xs text-amber-400 hover:text-amber-300 font-bold underline transition-colors"
           >
-            <ShieldCheck className="w-4 h-4 text-purple-400" />
-            <span>Acessar Painel Administrativo (Gestão)</span>
+            {isRegister ? 'Já tem uma conta registrada? Fazer Login' : 'Ainda não tem conta? Clique aqui para se cadastrar'}
           </button>
         </div>
 

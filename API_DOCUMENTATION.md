@@ -93,7 +93,7 @@ Base URL recomendada: `https://api.rotanova.com.br/v1`
       "dropoff_address": "Sol Nascente, Trecho 3",
       "distance_km": 18.5,
       "price": 38.40,
-      "category": "Rota Nova Pop"
+      "category": "VIA GO"
     }
   ]
 }
