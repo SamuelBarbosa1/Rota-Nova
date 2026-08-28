@@ -4,26 +4,39 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('rotaja_user');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.name && parsed.role) {
-          return parsed;
+    const activeRole = localStorage.getItem('rotanova_active_role');
+    if (activeRole === 'cliente') {
+      const saved = localStorage.getItem('rotanova_cliente_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved client user", e);
         }
-      } catch (e) {
-        console.error("Failed to parse saved user", e);
       }
-      localStorage.removeItem('rotaja_user');
+    } else if (activeRole === 'motorista') {
+      const saved = localStorage.getItem('rotanova_motorista_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved motorista user", e);
+        }
+      }
     }
     return null;
   });
 
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('rotaja_user', JSON.stringify(currentUser));
+      localStorage.setItem('rotanova_active_role', currentUser.role);
+      if (currentUser.role === 'cliente') {
+        localStorage.setItem('rotanova_cliente_user', JSON.stringify(currentUser));
+      } else if (currentUser.role === 'motorista') {
+        localStorage.setItem('rotanova_motorista_user', JSON.stringify(currentUser));
+      }
     } else {
-      localStorage.removeItem('rotaja_user');
+      localStorage.removeItem('rotanova_active_role');
     }
   }, [currentUser]);
 
@@ -52,7 +65,7 @@ export function AuthProvider({ children }) {
             destination: 'Sol Nascente, Trecho 3 (Estrada de Chão)',
             price: 24.50,
             driver: 'Carlos Eduardo (Toyota Corolla)',
-            category: 'Rota Nova! Pop',
+            category: 'Rota Nova Pop',
             status: 'Concluída'
           },
           {
@@ -62,7 +75,7 @@ export function AuthProvider({ children }) {
             destination: 'Colônia Agrícola Samambaia, Chácara 102 (Rua de Terra)',
             price: 28.90,
             driver: 'Marcos Vinicius (Toyota Etios)',
-            category: 'Rota Nova! Comfort',
+            category: 'Rota Nova Comfort',
             status: 'Concluída'
           }
         ]
@@ -131,12 +144,71 @@ export function AuthProvider({ children }) {
     setCurrentUser(updated);
   };
 
+  const addClientCompletedTrip = (newTrip) => {
+    if (!currentUser || currentUser.role !== 'cliente') return;
+    const currentHistory = currentUser.stats?.tripHistory || [];
+    const updatedHistory = [newTrip, ...currentHistory];
+    const newTotalSpent = updatedHistory.reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+
+    const updatedUser = {
+      ...currentUser,
+      stats: {
+        ...(currentUser.stats || {}),
+        totalSpent: newTotalSpent,
+        ridesCompleted: updatedHistory.length,
+        tripHistory: updatedHistory
+      }
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('rotanova_cliente_user', JSON.stringify(updatedUser));
+  };
+
+  const completeDriverTrip = (rideData = {}) => {
+    if (!currentUser || currentUser.role !== 'motorista') return;
+    const priceStr = rideData.price ? String(rideData.price).replace('R$', '').replace('.', '').replace(',', '.').trim() : '38.40';
+    const grossVal = parseFloat(priceStr) || 38.40;
+    const feeVal = Number((grossVal * 0.10).toFixed(2));
+    const fuelVal = Number((grossVal * 0.20).toFixed(2));
+    const netVal = Number((grossVal - feeVal - fuelVal).toFixed(2));
+
+    const prevStats = currentUser.stats || {};
+    const newGross = Number(((prevStats.grossEarnings || 0) + grossVal).toFixed(2));
+    const newFee = Number(((prevStats.platformFee || 0) + feeVal).toFixed(2));
+    const newFuel = Number(((prevStats.fuelEstimate || 0) + fuelVal).toFixed(2));
+    const newNet = Number(((prevStats.netProfit || 0) + netVal).toFixed(2));
+    const newRides = (prevStats.ridesCompleted || 0) + 1;
+    const newHours = (prevStats.hoursOnline || 0) + 1;
+
+    const updatedUser = {
+      ...currentUser,
+      stats: {
+        ...prevStats,
+        grossEarnings: newGross,
+        platformFee: newFee,
+        fuelEstimate: newFuel,
+        netProfit: newNet,
+        ridesCompleted: newRides,
+        hoursOnline: newHours
+      }
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('rotanova_motorista_user', JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     setCurrentUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, loginAsCliente, loginAsMotorista, completeInterview, logout }}>
+    <AuthContext.Provider value={{ 
+      currentUser, 
+      loginAsCliente, 
+      loginAsMotorista, 
+      completeInterview, 
+      addClientCompletedTrip, 
+      completeDriverTrip, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

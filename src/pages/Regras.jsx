@@ -42,7 +42,7 @@ export default function Regras() {
       title: "4º Cancelamento Indevido",
       severity: "Descredenciamento Definitivo",
       badgeColor: "bg-red-600 text-white border-red-500",
-      description: "Banimento e descredenciamento definitivo da conta de motorista parceiro Rota Nova!. Sem direito a recurso."
+      description: "Banimento e descredenciamento definitivo da conta de motorista parceiro Rota Nova. Sem direito a recurso."
     }
   ];
 
@@ -68,7 +68,7 @@ export default function Regras() {
           </h1>
 
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-            Ao aceitar uma corrida na <strong className="text-amber-400">Rota Nova!</strong>, o motorista me compromete a levar o passageiro até o destino informado. O local de embarque ou de desembarque <span className="underline decoration-amber-400">nunca é motivo de cancelamento</span>.
+            Ao aceitar uma corrida na <strong className="text-amber-400">Rota Nova</strong>, o motorista me compromete a levar o passageiro até o destino informado. O local de embarque ou de desembarque <span className="underline decoration-amber-400">nunca é motivo de cancelamento</span>.
           </p>
 
         </div>
@@ -215,7 +215,7 @@ export default function Regras() {
             <MessageSquareWarning className="w-6 h-6 text-amber-400" />
             <div>
               <h3 className="text-xl font-bold text-white">Canal de Ouvidoria & Denúncia</h3>
-              <p className="text-xs text-slate-400">Teve uma viagem recusada indevidamente? Reporte direto para a gerência Rota Nova!.</p>
+              <p className="text-xs text-slate-400">Teve uma viagem recusada indevidamente? Reporte direto para a gerência Rota Nova.</p>
             </div>
           </div>
 
@@ -279,7 +279,7 @@ export default function Regras() {
                 className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg text-sm transition-colors flex items-center justify-center space-x-2"
               >
                 <Send className="w-4 h-4" />
-                <span>Enviar Relato para Auditoria Rota Nova!</span>
+                <span>Enviar Relato para Auditoria Rota Nova</span>
               </button>
 
             </form>

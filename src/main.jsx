@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component {
             <div className="w-16 h-16 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-2xl mx-auto flex items-center justify-center font-bold text-2xl">
               ⚠️
             </div>
-            <h2 className="text-2xl font-black text-white">Restaurar Sessão Rota Nova!</h2>
+            <h2 className="text-2xl font-black text-white">Restaurar Sessão Rota Nova</h2>
             <p className="text-xs text-slate-400 leading-relaxed">
               Foi detectado um estado de sessão antigo ou incompatível. Clique no botão abaixo para restaurar o sistema.
             </p>

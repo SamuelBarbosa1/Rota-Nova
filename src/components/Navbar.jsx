@@ -47,7 +47,7 @@ export default function Navbar() {
               </div>
               <div>
                 <span className="text-2xl font-black tracking-tight text-white flex items-center gap-0.5">
-                  Rota<span className="text-amber-400">Nova!</span>
+                  Rota<span className="text-amber-400">Nova</span>
                 </span>
                 <span className="text-[10px] font-medium tracking-wider text-slate-400 block -mt-1 uppercase">
                   Aceitou, levou

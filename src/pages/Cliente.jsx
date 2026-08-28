@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import { 
@@ -9,7 +9,22 @@ import {
 import InteractiveMap from '../components/InteractiveMap';
 
 export default function Cliente() {
-  const { currentUser, switchRole } = useAuth();
+  const { currentUser, switchRole, addClientCompletedTrip } = useAuth();
+  
+  // Timeout refs to manage simulated ride state cleanly and prevent background bugs
+  const searchTimeoutRef = useRef(null);
+  const routeTimeoutRef = useRef(null);
+  const transitTimeoutRef = useRef(null);
+
+  const clearAllTimeouts = () => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (routeTimeoutRef.current) clearTimeout(routeTimeoutRef.current);
+    if (transitTimeoutRef.current) clearTimeout(transitTimeoutRef.current);
+  };
+
+  useEffect(() => {
+    return () => clearAllTimeouts();
+  }, []);
   const [activeTab, setActiveTab] = useState('pedir'); // 'pedir' | 'dash' | 'historico'
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -40,21 +55,16 @@ export default function Cliente() {
     }
   }, [currentUser]);
 
-  const totalSpentCalculated = currentUser?.stats?.totalSpent !== undefined 
-    ? currentUser.stats.totalSpent 
-    : tripHistory.reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const totalSpentCalculated = tripHistory.reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
 
-  const popSpentCalculated = currentUser?.isDemo 
-    ? 290.00 
-    : tripHistory.filter(t => t.category?.includes('Pop')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const popSpentCalculated = tripHistory.filter(t => t.category?.includes('Pop')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const comfortSpentCalculated = tripHistory.filter(t => t.category?.includes('Comfort')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
+  const xlSpentCalculated = tripHistory.filter(t => t.category?.includes('XL')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
 
-  const comfortSpentCalculated = currentUser?.isDemo 
-    ? 199.20 
-    : tripHistory.filter(t => t.category?.includes('Comfort')).reduce((acc, t) => acc + (typeof t.price === 'number' ? t.price : parseFloat(t.price) || 0), 0);
-
-  const totalCatSpent = popSpentCalculated + comfortSpentCalculated;
+  const totalCatSpent = popSpentCalculated + comfortSpentCalculated + xlSpentCalculated;
   const popPct = totalCatSpent > 0 ? Math.round((popSpentCalculated / totalCatSpent) * 100) : 0;
   const comfortPct = totalCatSpent > 0 ? Math.round((comfortSpentCalculated / totalCatSpent) * 100) : 0;
+  const xlPct = totalCatSpent > 0 ? Math.round((xlSpentCalculated / totalCatSpent) * 100) : 0;
 
   const handleAddFavorite = (e) => {
     e.preventDefault();
@@ -72,21 +82,21 @@ export default function Cliente() {
   const categories = [
     {
       id: 'pop',
-      name: 'Rota Nova! Pop',
+      name: 'Rota Nova Pop',
       desc: 'Carros compactos e muito econômicos',
       price: 24.50,
       eta: '3 min'
     },
     {
       id: 'comfort',
-      name: 'Rota Nova! Comfort',
+      name: 'Rota Nova Comfort',
       desc: 'Sedans novos com ar-condicionado reforçado',
       price: 31.90,
       eta: '2 min'
     },
     {
       id: 'xl',
-      name: 'Rota Nova! XL',
+      name: 'Rota Nova XL',
       desc: 'Até 6 passageiros ou malas volumosas',
       price: 42.00,
       eta: '5 min'
@@ -143,21 +153,32 @@ export default function Cliente() {
     );
   }
 
+  const handleCancelRide = () => {
+    clearAllTimeouts();
+    setRideStatus('idle');
+  };
+
   const handleRequestRide = (e) => {
     e.preventDefault();
     if (!origin || !destination) return;
 
+    // Clear any previous running simulation timers
+    clearAllTimeouts();
+
     setRideStatus('searching');
 
-    setTimeout(() => {
+    // 1. Calculating/Finding driver: 4 seconds
+    searchTimeoutRef.current = setTimeout(() => {
       setRideStatus('driver_en_route');
-    }, 3000);
+    }, 4000);
 
-    setTimeout(() => {
+    // 2. Driver en route: 7 seconds (takes 4 + 7 = 11 seconds total)
+    routeTimeoutRef.current = setTimeout(() => {
       setRideStatus('in_transit');
-    }, 7000);
+    }, 11000);
 
-    setTimeout(() => {
+    // 3. In transit simulation: 15 seconds (takes 11 + 15 = 26 seconds total)
+    transitTimeoutRef.current = setTimeout(() => {
       setRideStatus('completed');
       setShowRatingModal(true);
 
@@ -169,12 +190,15 @@ export default function Cliente() {
         destination: destination,
         price: priceVal,
         driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
-        category: categories.find(c => c.id === selectedCategory)?.name || 'Rota Nova! Pop',
+        category: categories.find(c => c.id === selectedCategory)?.name || 'Rota Nova Pop',
         status: 'Concluída'
       };
       setTripHistory(prev => [newTrip, ...prev]);
+      if (addClientCompletedTrip) {
+        addClientCompletedTrip(newTrip);
+      }
 
-    }, 12000);
+    }, 26000);
   };
 
   return (
@@ -254,7 +278,7 @@ export default function Cliente() {
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     <Car className="w-5 h-5 text-amber-400" />
-                    Solicitar Corrida Rota Nova!
+                    Solicitar Corrida Rota Nova
                   </h3>
                   <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold border border-amber-500/30">
                     Sem cancelamento
@@ -383,12 +407,12 @@ export default function Cliente() {
                       className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 transition-all text-base flex items-center justify-center space-x-2"
                     >
                       <Send className="w-5 h-5" />
-                      <span>Chamar Motorista Rota Nova!</span>
+                      <span>Chamar Motorista Rota Nova</span>
                     </button>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setRideStatus('idle')}
+                      onClick={handleCancelRide}
                       className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold py-3 rounded-xl text-xs transition-colors"
                     >
                       Cancelar Solicitação
@@ -416,7 +440,7 @@ export default function Cliente() {
                 <div className="flex items-center space-x-3">
                   <ShieldCheck className="w-8 h-8 text-amber-400" />
                   <div>
-                    <h4 className="text-sm font-bold text-white">Garantia Rota Nova! sem Recusas</h4>
+                    <h4 className="text-sm font-bold text-white">Garantia Rota Nova sem Recusas</h4>
                     <p className="text-xs text-slate-400">O motorista é obrigado a levar você até o endereço solicitado.</p>
                   </div>
                 </div>
@@ -478,7 +502,7 @@ export default function Cliente() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>Rota Nova! Pop (Econômico)</span>
+                      <span>Rota Nova Pop (Econômico)</span>
                       <span>R$ {popSpentCalculated.toFixed(2).replace('.', ',')} ({popPct}%)</span>
                     </div>
                     <div className="w-full bg-slate-900 rounded-full h-3">
@@ -488,11 +512,21 @@ export default function Cliente() {
 
                   <div>
                     <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
-                      <span>Rota Nova! Comfort (Sedan/SUV)</span>
+                      <span>Rota Nova Comfort (Sedan/SUV)</span>
                       <span>R$ {comfortSpentCalculated.toFixed(2).replace('.', ',')} ({comfortPct}%)</span>
                     </div>
                     <div className="w-full bg-slate-900 rounded-full h-3">
                       <div className="bg-amber-400 h-3 rounded-full transition-all duration-500" style={{ width: `${comfortPct}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                      <span>Rota Nova XL (Até 6 Passageiros)</span>
+                      <span>R$ {xlSpentCalculated.toFixed(2).replace('.', ',')} ({xlPct}%)</span>
+                    </div>
+                    <div className="w-full bg-slate-900 rounded-full h-3">
+                      <div className="bg-amber-600 h-3 rounded-full transition-all duration-500" style={{ width: `${xlPct}%` }}></div>
                     </div>
                   </div>
                 </div>

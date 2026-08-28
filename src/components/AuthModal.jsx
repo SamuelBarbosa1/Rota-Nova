@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Car, X, ArrowRight, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
@@ -15,6 +15,53 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
   const [phone, setPhone] = useState('');
   const [carModel, setCarModel] = useState('');
   const [carPlate, setCarPlate] = useState('');
+
+  // Pre-populate form fields when role changes or modal opens, using saved localStorage profiles
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    if (role === 'cliente') {
+      const saved = localStorage.getItem('rotanova_cliente_user');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setName(parsed.name || '');
+          setEmail(parsed.email || '');
+          setPhone(parsed.phone || '');
+          setIsRegister(false); // Default to login if profile already exists
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setIsRegister(true);
+      }
+    } else {
+      const saved = localStorage.getItem('rotanova_motorista_user');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setName(parsed.name || '');
+          setEmail(parsed.email || '');
+          setPhone(parsed.phone || '');
+          setCarModel(parsed.driverData?.carModel || '');
+          setCarPlate(parsed.driverData?.carPlate || '');
+          setIsRegister(false); // Default to login
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setCarModel('');
+        setCarPlate('');
+        setIsRegister(true);
+      }
+    }
+  }, [role, isOpen]);
 
   if (!isOpen) return null;
 
@@ -56,7 +103,7 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente' }) 
 
         {/* Modal Header */}
         <div className="text-center space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Acesso Rota Nova!</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Acesso Rota Nova</span>
           <h2 className="text-2xl sm:text-3xl font-black text-white">
             {isRegister ? 'Criar sua conta' : 'Entrar na sua conta'}
           </h2>

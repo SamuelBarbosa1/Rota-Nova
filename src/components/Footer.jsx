@@ -89,7 +89,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800/80 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Rota Nova! Tecnologias de Mobilidade S.A. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Rota Nova Tecnologias de Mobilidade S.A. Todos os direitos reservados.</p>
           <div className="flex items-center space-x-6 mt-4 md:mt-0">
             <Link to="/regras" className="hover:text-slate-400">Termos de Uso</Link>
             <Link to="/regras" className="hover:text-slate-400">Privacidade</Link>

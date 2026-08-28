@@ -63,7 +63,7 @@ export default function Home() {
               </h1>
 
               <p className="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed max-w-2xl">
-                O <strong className="text-white font-semibold">Rota Nova!</strong> conecta clientes e motoristas com cadastro simples, entrevista prévia obrigatória e regra rígida de compromisso: <span className="text-amber-400 font-semibold underline decoration-amber-500/50 decoration-2">aceitou a corrida, leva até o destino final</span>.
+                O <strong className="text-white font-semibold">Rota Nova</strong> conecta clientes e motoristas com cadastro simples, entrevista prévia obrigatória e regra rígida de compromisso: <span className="text-amber-400 font-semibold underline decoration-amber-500/50 decoration-2">aceitou a corrida, leva até o destino final</span>.
               </p>
 
               {/* Action Buttons */}
@@ -161,11 +161,11 @@ export default function Home() {
                 {isCalculated && (
                   <div className="bg-amber-950/60 border border-amber-800/80 p-4 rounded-xl space-y-2 animate-fadeIn">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-300">Estimativa Rota Nova! Padrão:</span>
+                      <span className="text-xs text-slate-300">Estimativa Rota Nova Padrão:</span>
                       <span className="text-xl font-black text-amber-400">R$ {estimatedPrice}</span>
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Garantia Rota Nova!: O motorista que aceitar esta viagem não poderá cancelar por motivo de rua ou bairro.
+                      Garantia Rota Nova: O motorista que aceitar esta viagem não poderá cancelar por motivo de rua ou bairro.
                     </p>
                     <button
                       onClick={() => openAuth('cliente')}
@@ -188,7 +188,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <h2 className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Como funciona o Rota Nova!</h2>
+            <h2 className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Como funciona o Rota Nova</h2>
             <p className="text-3xl sm:text-4xl font-black text-white">Mobilidade urbana com respeito total</p>
             <p className="text-slate-400 text-base">
               Conheça os pilares que garantem viagens tranquilas para passageiros e ganhos justos para motoristas.
@@ -302,7 +302,7 @@ export default function Home() {
           <div className="flex justify-between items-end">
             <div>
               <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Demonstração ao Vivo</span>
-              <h2 className="text-3xl font-black text-white">Visualizador do Radar Rota Nova!</h2>
+              <h2 className="text-3xl font-black text-white">Visualizador do Radar Rota Nova</h2>
             </div>
           </div>
           <InteractiveMap

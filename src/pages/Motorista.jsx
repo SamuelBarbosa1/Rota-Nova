@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
+import InteractiveMap from '../components/InteractiveMap';
 import { 
   Car, ShieldCheck, CheckCircle2, AlertTriangle, HelpCircle, 
   ArrowRight, Award, DollarSign, Activity, FileCheck, Phone, Mail, 
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react';
 
 export default function Motorista() {
-  const { currentUser, completeInterview } = useAuth();
+  const { currentUser, completeInterview, completeDriverTrip } = useAuth();
   const [activeTab, setActiveTab] = useState('cockpit'); // 'cockpit' | 'financeiro' | 'entrevista'
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -16,6 +17,15 @@ export default function Motorista() {
   const [isOnline, setIsOnline] = useState(true);
   const [activeCall, setActiveCall] = useState(null);
   const [acceptedRide, setAcceptedRide] = useState(null);
+
+  const handleFinishRide = () => {
+    if (acceptedRide) {
+      if (completeDriverTrip) {
+        completeDriverTrip(acceptedRide);
+      }
+      setAcceptedRide(null);
+    }
+  };
 
   // Exception form state
   const [showExceptionModal, setShowExceptionModal] = useState(false);
@@ -71,13 +81,13 @@ export default function Motorista() {
   const questions = [
     {
       id: 1,
-      question: "O cliente solicita uma corrida e o destino final é uma estrada de chão / rua de terra. Qual é a conduta exigida pela Rota Nova!?",
+      question: "O cliente solicita uma corrida e o destino final é uma estrada de chão / rua de terra. Qual é a conduta exigida pela Rota Nova?",
       options: [
         { key: 'A', text: "Levar o passageiro até a porta do destino com respeito e cordialidade.", correct: true },
         { key: 'B', text: "Pedir para o passageiro cancelar alegando que terra estraga a suspensão.", correct: false },
         { key: 'C', text: "Cobrar taxa extra por fora para rodar em estrada de chão.", correct: false }
       ],
-      explanation: "No Rota Nova!, o acesso a estradas de chão ou vias não asfaltadas faz parte da mobilidade democrática e NUNCA é motivo de cancelamento."
+      explanation: "No Rota Nova, o acesso a estradas de chão ou vias não asfaltadas faz parte da mobilidade democrática e NUNCA é motivo de cancelamento."
     },
     {
       id: 2,
@@ -103,7 +113,7 @@ export default function Motorista() {
       id: 4,
       question: "Qual é a penalidade máxima aplicada ao motorista que acumula 4 cancelamentos indevidos por causa de destino?",
       options: [
-        { key: 'A', text: "Descredenciamento e banimento definitivo da conta Rota Nova!.", correct: true },
+        { key: 'A', text: "Descredenciamento e banimento definitivo da conta Rota Nova.", correct: true },
         { key: 'B', text: "Apenas um aviso verbal por e-mail.", correct: false },
         { key: 'C', text: "Perda de 5 pontos na carteira de motorista.", correct: false }
       ],
@@ -267,7 +277,7 @@ export default function Motorista() {
                 <div className={`w-3.5 h-3.5 rounded-full ${isOnline ? 'bg-amber-400 animate-ping' : 'bg-slate-500'}`}></div>
                 <div>
                   <h3 className="text-base font-black text-white">
-                    {isOnline ? 'Modo Online — Prontidão Rota Nova!' : 'Modo Offline (Pausa)'}
+                    {isOnline ? 'Modo Online — Prontidão Rota Nova' : 'Modo Offline (Pausa)'}
                   </h3>
                   <p className="text-xs text-slate-400">
                     {isOnline ? 'Pronto para receber chamadas de passageiros na sua região' : 'Ative para começar a rodar e faturar'}
@@ -295,7 +305,7 @@ export default function Motorista() {
                 <div>
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <Activity className="w-5 h-5 text-amber-400" />
-                    Radar de Corridas Rota Nova! em Tempo Real
+                    Radar de Corridas Rota Nova em Tempo Real
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">Alertas de chamadas validadas sem filtro de bairro.</p>
                 </div>
@@ -364,12 +374,22 @@ export default function Motorista() {
                     <p>Destino: <strong className="text-amber-400">{acceptedRide.dropoff}</strong></p>
                   </div>
 
+                  <InteractiveMap
+                    origin={acceptedRide.pickup}
+                    destination={acceptedRide.dropoff}
+                    status="in_transit"
+                    driverName={driverName}
+                    vehicle={carModel}
+                    etaMinutes={6}
+                    distanceKm={acceptedRide.distance.replace(' km', '')}
+                  />
+
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setAcceptedRide(null)}
+                      onClick={handleFinishRide}
                       className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors"
                     >
-                      Finalizar Viagem e Receber R$ 38,40 na Carteira
+                      Finalizar Viagem e Receber {acceptedRide.price || 'R$ 38,40'} na Carteira
                     </button>
                     <button
                       onClick={() => setShowExceptionModal(true)}
@@ -385,7 +405,7 @@ export default function Motorista() {
                 <div className="text-center py-12 text-slate-500 space-y-2">
                   <Car className="w-12 h-12 mx-auto text-slate-700" />
                   <p className="text-sm font-medium">Aguardando chamadas de passageiros na sua área...</p>
-                  <p className="text-xs">O radar Rota Nova! prioriza motoristas credenciados com nota alta.</p>
+                  <p className="text-xs">O radar Rota Nova prioriza motoristas credenciados com nota alta.</p>
                 </div>
               )}
 
@@ -407,7 +427,7 @@ export default function Motorista() {
               </div>
 
               <div className="glass-panel p-6 rounded-2xl border border-slate-800">
-                <p className="text-xs text-slate-400 font-semibold uppercase">Taxa Rota Nova! (10%)</p>
+                <p className="text-xs text-slate-400 font-semibold uppercase">Taxa Rota Nova (10%)</p>
                 <p className="text-3xl font-black text-rose-400 mt-2">-R$ {(currentUser.stats?.platformFee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 <p className="text-[11px] text-slate-400 mt-1">Taxa justa de intermediação</p>
               </div>
@@ -440,7 +460,7 @@ export default function Motorista() {
                     <span className="font-black text-amber-400">R$ {(currentUser.stats?.grossEarnings || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-slate-900 rounded-xl border border-slate-800">
-                    <span className="text-slate-300">Desconto Taxa de Serviço Rota Nova! (10%)</span>
+                    <span className="text-slate-300">Desconto Taxa de Serviço Rota Nova (10%)</span>
                     <span className="font-black text-rose-400">- R$ {(currentUser.stats?.platformFee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-slate-900 rounded-xl border border-slate-800">
@@ -502,7 +522,7 @@ export default function Motorista() {
                 <div className="flex items-center space-x-3">
                   <Award className="w-8 h-8 text-amber-400" />
                   <div>
-                    <h4 className="text-lg font-black text-white">Certificado de Aprovação de Conduta Rota Nova!</h4>
+                    <h4 className="text-lg font-black text-white">Certificado de Aprovação de Conduta Rota Nova</h4>
                     <p className="text-xs text-slate-300">Nota Obtida: {currentUser.driverData?.interviewScore || 100}/100 • Validade: Ativa (Condutor Credenciado)</p>
                   </div>
                 </div>
@@ -513,7 +533,7 @@ export default function Motorista() {
                 <h4 className="text-xl font-black text-white">REPROVADO NA ENTREVISTA DE CONDUTA</h4>
                 <p className="text-3xl font-black text-rose-400">Nota: {quizFailed.score}/100</p>
                 <p className="text-xs text-slate-300 max-w-lg mx-auto">
-                  Você acertou <strong>{quizFailed.correctCount} de {quizFailed.totalCount}</strong> perguntas. O Rota Nova! exige pontuação mínima de <strong>75/100</strong> para credenciar o motorista parceiro e liberar a aceitação de corridas.
+                  Você acertou <strong>{quizFailed.correctCount} de {quizFailed.totalCount}</strong> perguntas. O Rota Nova exige pontuação mínima de <strong>75/100</strong> para credenciar o motorista parceiro e liberar a aceitação de corridas.
                 </p>
                 <button
                   onClick={handleRetryQuiz}
@@ -525,7 +545,7 @@ export default function Motorista() {
             ) : (
               <div className="space-y-6">
                 <div className="bg-amber-950/40 border border-amber-500/40 p-4 rounded-2xl text-xs text-amber-300 font-medium">
-                  ⚠️ <strong>Atenção novo condutor:</strong> Para poder aceitar chamadas de passageiros no Rota Nova!, você precisa responder corretamente às perguntas abaixo. Nota mínima para aprovação: 75/100.
+                  ⚠️ <strong>Atenção novo condutor:</strong> Para poder aceitar chamadas de passageiros no Rota Nova, você precisa responder corretamente às perguntas abaixo. Nota mínima para aprovação: 75/100.
                 </div>
 
                 {quizError && (
@@ -611,7 +631,7 @@ export default function Motorista() {
               </form>
             ) : (
               <div className="text-center py-4 space-y-3">
-                <p className="text-sm font-bold text-amber-400">✓ Ocorrência enviada para auditoria Rota Nova! sem penalidade.</p>
+                <p className="text-sm font-bold text-amber-400">✓ Ocorrência enviada para auditoria Rota Nova sem penalidade.</p>
                 <button
                   onClick={() => {
                     setAcceptedRide(null);
