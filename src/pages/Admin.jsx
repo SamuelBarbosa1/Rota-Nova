@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Users, 
@@ -20,15 +20,23 @@ import {
   Check, 
   Ban, 
   RefreshCw,
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react';
 
 export default function Admin() {
-  const { currentUser, driversList, approveDriver, toggleDriverStatus } = useAuth();
-  const [activeTab, setActiveTab] = useState('visao_geral'); // 'visao_geral' | 'motoristas' | 'faturamento' | 'corridas'
+  const { currentUser, driversList, approveDriver, toggleDriverStatus, activeTab, setActiveTab, logout } = useAuth();
   const [searchDriver, setSearchDriver] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // 'todos' | 'Aprovado' | 'Pendente' | 'Suspenso'
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Validate activeTab on mount or change
+  useEffect(() => {
+    const validTabs = ['visao_geral', 'motoristas', 'faturamento', 'corridas', 'menu'];
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab('visao_geral');
+    }
+  }, [activeTab, setActiveTab]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -786,6 +794,49 @@ export default function Admin() {
             ))}
           </div>
 
+        </div>
+      )}
+
+      {/* Tab 5: Menu Administrativo */}
+      {activeTab === 'menu' && (
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6 max-w-xl mx-auto animate-fadeIn">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/40 flex items-center justify-center font-black text-2xl shadow-lg mx-auto">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white">Painel Geral de Gestão</h2>
+              <p className="text-xs text-slate-400">Controle Operacional e Gestão Financeira Rota Nova</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-slate-800">
+            <button
+              onClick={handleExportCSV}
+              className="w-full bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-400 font-bold py-3.5 rounded-xl text-center text-xs transition-colors flex items-center justify-center space-x-2"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Exportar Relatório Geral (CSV)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('visao_geral')}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-center text-xs transition-all flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Voltar para Visão Geral</span>
+            </button>
+
+            {currentUser && (
+              <button
+                onClick={logout}
+                className="w-full bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 font-bold py-3.5 rounded-xl text-center text-xs transition-all flex items-center justify-center space-x-2 shadow-lg shadow-rose-950/20"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sair da Minha Conta</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

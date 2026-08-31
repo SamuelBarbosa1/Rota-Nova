@@ -5,12 +5,12 @@ import {
   User, MapPin, Navigation, Car, ShieldCheck, Clock, CreditCard, 
   CheckCircle2, Star, Download, Sparkles, AlertCircle, History, Send, 
   TrendingUp, DollarSign, Heart, Bookmark, Plus, FileText, ArrowRight, Lock,
-  Zap, Leaf, Crown, Package, Dog
+  Zap, Leaf, Crown, Package, Dog, LogOut
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
 
 export default function Cliente() {
-  const { currentUser, switchRole, addClientCompletedTrip } = useAuth();
+  const { currentUser, switchRole, addClientCompletedTrip, activeTab, setActiveTab, logout } = useAuth();
   
   // Timeout refs to manage simulated ride state cleanly and prevent background bugs
   const searchTimeoutRef = useRef(null);
@@ -26,7 +26,15 @@ export default function Cliente() {
   useEffect(() => {
     return () => clearAllTimeouts();
   }, []);
-  const [activeTab, setActiveTab] = useState('pedir'); // 'pedir' | 'dash' | 'historico'
+
+  // Validate activeTab on mount or role switch
+  useEffect(() => {
+    const validTabs = ['pedir', 'dash', 'historico', 'menu'];
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab('pedir');
+    }
+  }, [activeTab, setActiveTab]);
+
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Ride Request state
@@ -727,6 +735,54 @@ export default function Cliente() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'menu' && (
+          <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6 max-w-xl mx-auto animate-fadeIn">
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-black text-3xl shadow-lg mx-auto">
+                {(currentUser?.name || 'US').substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white">{currentUser?.name || 'Usuário'}</h2>
+                <p className="text-sm text-slate-400 font-medium">{currentUser?.email || ''}</p>
+                <span className="inline-block text-[10px] font-black tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full uppercase mt-2">
+                  Passageiro Rota Nova
+                </span>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800/80 pt-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-center">
+                  <p className="text-2xl font-black text-white">R$ {(currentUser?.stats?.totalSpent || 0).toFixed(2).replace('.', ',')}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Total Gasto</p>
+                </div>
+                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-center">
+                  <p className="text-2xl font-black text-white">{currentUser?.stats?.ridesCompleted || 0}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Corridas Feitas</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setActiveTab('pedir')}
+                  className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold py-3.5 rounded-xl text-center text-sm transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Navigation className="w-4 h-4 text-amber-400" />
+                  <span>Voltar para Pedir Corrida</span>
+                </button>
+
+                <button
+                  onClick={logout}
+                  className="w-full bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 font-bold py-3.5 rounded-xl text-center text-sm transition-all flex items-center justify-center space-x-2 shadow-lg shadow-rose-950/20"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair da Minha Conta</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -23,7 +23,17 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente', in
   useEffect(() => {
     if (!isOpen) return;
     setRole(initialRole);
-  }, [initialRole, isOpen]);
+    setIsRegister(initialMode === 'register');
+    // Clean up inputs on open
+    setName('');
+    setEmail('');
+    setPhone('');
+    setPassword('');
+    setCarModel('');
+    setCarPlate('');
+    setCompany('');
+    setInvestorType('Investidor Anjo / Apoiador');
+  }, [isOpen, initialRole, initialMode]);
 
   if (!isOpen) return null;
 

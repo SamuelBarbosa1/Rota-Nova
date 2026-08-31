@@ -45,6 +45,8 @@ export function AuthProvider({ children }) {
     return null;
   });
 
+  const [activeTab, setActiveTab] = useState('pedir');
+
   // Default system drivers list for admin view and management
   const [driversList, setDriversList] = useState(() => {
     const saved = localStorage.getItem('rotanova_drivers_list');
@@ -186,6 +188,19 @@ export function AuthProvider({ children }) {
   }, [currentUser]);
 
   useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role === 'cliente') {
+        setActiveTab('pedir');
+      } else if (currentUser.role === 'motorista') {
+        const isPassed = !!currentUser.driverData?.interviewPassed;
+        setActiveTab(isPassed ? 'cockpit' : 'entrevista');
+      } else if (currentUser.role === 'investidor') {
+        setActiveTab('metrics');
+      }
+    }
+  }, [currentUser?.role, currentUser?.driverData?.interviewPassed]);
+
+  useEffect(() => {
     localStorage.setItem('rotanova_drivers_list', JSON.stringify(driversList));
   }, [driversList]);
 
@@ -275,6 +290,7 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(user);
+    setActiveTab('pedir');
     if (!isDemo) saveToRegistry(user);
     return user;
   };
@@ -307,6 +323,7 @@ export function AuthProvider({ children }) {
 
       if (existing) {
         setCurrentUser(existing);
+        setActiveTab(existing.driverData?.interviewPassed ? 'cockpit' : 'entrevista');
         return existing;
       }
     }
@@ -346,6 +363,7 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(user);
+    setActiveTab(user.driverData?.interviewPassed ? 'cockpit' : 'entrevista');
     if (!isDemo) saveToRegistry(user);
     return user;
   };
@@ -465,6 +483,7 @@ export function AuthProvider({ children }) {
       const existing = usersRegistry.find(u => u.email.toLowerCase() === inputEmail && u.role === 'investidor');
       if (existing) {
         setCurrentUser(existing);
+        setActiveTab('metrics');
         return existing;
       }
     }
@@ -515,6 +534,7 @@ export function AuthProvider({ children }) {
       }
     };
     setCurrentUser(user);
+    setActiveTab('metrics');
     if (!isDemo) saveToRegistry(user);
     return user;
   };
@@ -527,6 +547,8 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{ 
       currentUser, 
       driversList,
+      activeTab,
+      setActiveTab,
       loginAsCliente, 
       loginAsMotorista, 
       loginAsAdmin,

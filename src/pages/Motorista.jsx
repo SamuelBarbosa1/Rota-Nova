@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { 
   Car, ShieldCheck, CheckCircle2, AlertTriangle, HelpCircle, 
   ArrowRight, Award, DollarSign, Activity, FileCheck, Phone, Mail, 
-  User, ShieldAlert, TrendingUp, Percent, Clock, AlertCircle, Wrench, Send, Lock 
+  User, ShieldAlert, TrendingUp, Percent, Clock, AlertCircle, Wrench, Send, Lock, LogOut 
 } from 'lucide-react';
 
 export default function Motorista() {
-  const { currentUser, completeInterview, completeDriverTrip } = useAuth();
+  const { currentUser, completeInterview, completeDriverTrip, activeTab, setActiveTab, logout } = useAuth();
   const isInterviewPassed = !!currentUser?.driverData?.interviewPassed;
 
-  const [activeTab, setActiveTab] = useState(() => (isInterviewPassed ? 'cockpit' : 'entrevista')); // default to entrevista if pending
+  // Validate activeTab on mount or role switch
+  useEffect(() => {
+    const validTabs = ['cockpit', 'financeiro', 'entrevista', 'menu'];
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab(isInterviewPassed ? 'cockpit' : 'entrevista');
+    }
+  }, [activeTab, setActiveTab, isInterviewPassed]);
+
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Online / Radar state: Only allow online if interview is passed
@@ -696,6 +703,61 @@ export default function Motorista() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {activeTab === 'menu' && (
+          <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6 max-w-xl mx-auto animate-fadeIn">
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-black text-3xl shadow-lg mx-auto">
+                {(currentUser?.name || 'MO').substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white">{currentUser?.name || 'Motorista'}</h2>
+                <p className="text-sm text-slate-400 font-medium">{currentUser?.email || ''}</p>
+                <span className="inline-block text-[10px] font-black tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full uppercase mt-2">
+                  Motorista Parceiro Rota Nova
+                </span>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800/80 pt-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-center">
+                  <p className="text-2xl font-black text-white">R$ {(currentUser?.stats?.grossEarnings || 0).toFixed(2).replace('.', ',')}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Ganhos Brutos</p>
+                </div>
+                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-center">
+                  <p className="text-2xl font-black text-white">{currentUser?.stats?.ridesCompleted || 0}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Viagens Concluídas</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs space-y-2">
+                <p className="font-semibold text-slate-300 font-bold">Detalhes do Veículo:</p>
+                <p className="text-slate-400">Modelo: <strong className="text-slate-200">{currentUser.driverData?.carModel || 'Veículo Registrado'}</strong></p>
+                <p className="text-slate-400">Placa: <strong className="text-slate-200">{currentUser.driverData?.carPlate || 'JKL-0000'}</strong></p>
+                <p className="text-slate-400">Status: <strong className="text-emerald-400">Aprovado</strong></p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setActiveTab('cockpit')}
+                  className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold py-3.5 rounded-xl text-center text-sm transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Car className="w-4 h-4 text-amber-400" />
+                  <span>Ir para o Cockpit ao Vivo</span>
+                </button>
+
+                <button
+                  onClick={logout}
+                  className="w-full bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 font-bold py-3.5 rounded-xl text-center text-sm transition-all flex items-center justify-center space-x-2 shadow-lg shadow-rose-950/20"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair da Minha Conta</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

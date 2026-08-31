@@ -106,7 +106,8 @@ export default function Home() {
 
   const openAuth = (role) => {
     if (currentUser) {
-      navigate(currentUser.role === 'cliente' ? '/cliente' : '/motorista');
+      const target = currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : currentUser.role === 'investidor' ? '/investidor' : '/admin';
+      navigate(target);
     } else {
       setAuthRole(role);
       setAuthModalOpen(true);

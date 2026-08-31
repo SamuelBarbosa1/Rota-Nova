@@ -2,20 +2,22 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
-import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard, TrendingUp } from 'lucide-react';
+import { Car, User, ShieldAlert, LogOut, Menu, X, ArrowRight, LayoutDashboard, TrendingUp, LogIn, UserPlus } from 'lucide-react';
 
 export default function Navbar() {
   const { currentUser, logout } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authRole, setAuthRole] = useState('cliente');
+  const [authMode, setAuthMode] = useState('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
 
-  const openAuth = (role) => {
+  const openAuth = (role, mode = 'login') => {
     setAuthRole(role);
+    setAuthMode(mode);
     setAuthModalOpen(true);
   };
 
@@ -151,13 +153,13 @@ export default function Navbar() {
               ) : (
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => openAuth('cliente')}
+                    onClick={() => openAuth('cliente', 'login')}
                     className="text-xs font-bold text-slate-300 hover:text-white px-3 py-2 rounded-xl transition-colors"
                   >
                     Entrar
                   </button>
                   <button
-                    onClick={() => openAuth('cliente')}
+                    onClick={() => openAuth('cliente', 'register')}
                     className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all text-xs flex items-center space-x-1.5"
                   >
                     <span>Criar Conta</span>
@@ -198,31 +200,65 @@ export default function Navbar() {
               Regras do App
             </Link>
 
-            {currentUser && (
-              <Link
-                to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : '/admin'}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-400 bg-slate-800"
-              >
-                Meu Dashboard ({currentUser.role === 'cliente' ? 'Cliente' : currentUser.role === 'motorista' ? 'Motorista' : 'Admin'})
-              </Link>
-            )}
+            <Link
+              to="/investidor"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm ${isActive('/investidor') ? 'text-amber-400 font-bold bg-slate-800' : 'text-emerald-400 font-bold hover:bg-slate-800'}`}
+            >
+              Investidor & Apoiador
+            </Link>
 
-            {!currentUser && (
-              <div className="pt-2 space-y-2">
+            {currentUser && (
+              <div className="pt-2 border-t border-slate-800 space-y-2">
+                <Link
+                  to={currentUser.role === 'cliente' ? '/cliente' : currentUser.role === 'motorista' ? '/motorista' : currentUser.role === 'investidor' ? '/investidor' : '/admin'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm font-bold text-amber-400 bg-slate-800"
+                >
+                  Meu Painel ({currentUser.role === 'cliente' ? 'Passageiro' : currentUser.role === 'motorista' ? 'Motorista' : currentUser.role === 'investidor' ? 'Investidor' : 'Admin'})
+                </Link>
+
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    openAuth('cliente');
+                    handleLogout();
                   }}
-                  className="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl text-center text-sm"
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm font-bold text-rose-400 hover:bg-rose-950/40 flex items-center space-x-2"
                 >
-                  Entrar ou Criar Conta
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair da Minha Conta</span>
                 </button>
+              </div>
+            )}
+
+            {!currentUser && (
+              <div className="pt-2 space-y-3">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuth('cliente', 'login');
+                  }}
+                  className="w-full bg-slate-800 hover:bg-slate-700/80 text-white font-bold py-3 rounded-xl text-center text-sm border border-slate-700/80 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Entrar</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuth('cliente', 'register');
+                  }}
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-center text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Criar Conta</span>
+                </button>
+
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center bg-purple-950/60 text-purple-300 font-bold py-2.5 rounded-xl border border-purple-500/40 text-xs"
+                  className="block text-center bg-purple-950/60 text-purple-300 font-bold py-2.5 rounded-xl border border-purple-500/40 text-xs transition-colors"
                 >
                   Painel Administrativo
                 </Link>
@@ -236,6 +272,7 @@ export default function Navbar() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         initialRole={authRole}
+        initialMode={authMode}
       />
     </>
   );
