@@ -1,17 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
+import PixApoioModal from '../components/PixApoioModal';
 import { 
   TrendingUp, Users, DollarSign, Award, ArrowUpRight, ArrowRight, 
   Sparkles, ShieldCheck, PieChart, Activity, Layers, Calendar, Lock, 
   UserCheck, RefreshCw, Send, CheckCircle2, ChevronDown, ChevronUp,
-  Briefcase, Mail, Phone, ExternalLink, Flame, LogOut
+  Briefcase, Mail, Phone, ExternalLink, Flame, LogOut, QrCode,
+  Copy, Check, HeartHandshake, Wallet
 } from 'lucide-react';
 
 export default function Investidor() {
-  const { currentUser, activeTab, setActiveTab, logout } = useAuth();
+  const { currentUser, activeTab, setActiveTab, logout, loginAsInvestidor } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [pixInlineCopied, setPixInlineCopied] = useState(false);
   const [userTabFilter, setUserTabFilter] = useState('total'); // 'total' | 'passageiros' | 'motoristas'
+
+  const pixUrl = "https://cobranca.c6pix.com.br/01KXDM3SKSR75RMGNR6A9APKCX";
+  const qrCodeImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixUrl)}&color=020617&bgcolor=ffffff`;
+
+  const handleCopyPixLink = () => {
+    navigator.clipboard.writeText(pixUrl);
+    setPixInlineCopied(true);
+    setTimeout(() => setPixInlineCopied(false), 3000);
+  };
+
+  const handleDirectInvestorAccess = () => {
+    loginAsInvestidor({ isDemo: true });
+  };
 
   // Validate activeTab on mount
   useEffect(() => {
@@ -30,10 +47,10 @@ export default function Investidor() {
   if (!currentUser || currentUser.role !== 'investidor') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 py-16 flex items-center justify-center selection:bg-amber-500 selection:text-slate-950">
-        <div className="max-w-xl mx-auto px-4 text-center">
+        <div className="max-w-2xl mx-auto px-4 text-center space-y-6">
           <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-slate-800 space-y-6 shadow-2xl">
             
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center shadow-lg">
               <Lock className="w-8 h-8" />
             </div>
 
@@ -51,12 +68,78 @@ export default function Investidor() {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
-                onClick={() => setAuthModalOpen(true)}
-                className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 text-sm transition-all flex items-center justify-center space-x-2"
+                onClick={handleDirectInvestorAccess}
+                className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 text-sm transition-all flex items-center justify-center space-x-2 active:scale-95"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Entrar como Investidor / Apoiador</span>
+                <span>Acessar Painel do Investidor</span>
               </button>
+
+              <button
+                onClick={() => setPixModalOpen(true)}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 border border-amber-500/50 hover:border-amber-400 text-amber-300 font-bold py-4 rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-lg active:scale-95"
+              >
+                <HeartHandshake className="w-4 h-4 text-amber-400" />
+                <span>Apoiar via PIX (Valor Livre)</span>
+              </button>
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="text-xs text-slate-400 hover:text-amber-300 underline font-medium transition-colors"
+              >
+                Já possui cadastro formal de investidor? Entrar com e-mail e senha
+              </button>
+            </div>
+
+            {/* PIX Quick Box for spontaneous contributors */}
+            <div className="pt-4 border-t border-slate-800/80 text-left">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 overflow-hidden shadow-lg">
+                <div className="flex items-center space-x-3.5 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+                    <QrCode className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
+                      Contribuição Voluntária Direta
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">
+                      MAX LENNER DIOGO DE MORAIS <span className="text-slate-400 font-normal text-xs">(C6 Bank)</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Chave / CPF: 053.391.481-73 • Sem valor mínimo
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end">
+                  <button
+                    onClick={handleCopyPixLink}
+                    className="flex-1 md:flex-none px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
+                  >
+                    {pixInlineCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Copiar Link</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setPixModalOpen(true)}
+                    className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-black text-slate-950 flex items-center justify-center gap-1.5 transition-colors shadow-md whitespace-nowrap active:scale-95"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    <span>Ver QR Code</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -66,6 +149,11 @@ export default function Investidor() {
           isOpen={authModalOpen}
           onClose={() => setAuthModalOpen(false)}
           initialRole="investidor"
+        />
+
+        <PixApoioModal
+          isOpen={pixModalOpen}
+          onClose={() => setPixModalOpen(false)}
         />
       </div>
     );
@@ -519,89 +607,227 @@ export default function Investidor() {
 
         {/* 4. SIMULADOR DE APORTE & CONTATO DIRETO (TAB: INVESTIR) */}
         {activeTab === 'investir' && (
-          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-amber-500/40 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 space-y-8 animate-fadeIn">
+          <div className="space-y-8 animate-fadeIn">
             
-            <div className="max-w-3xl space-y-3">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400 bg-amber-500/20 px-3.5 py-1.5 rounded-full border border-amber-500/30">
-                Oportunidade de Investimento & Apoio
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-white">
-                Quer Fazer Parte da Expansão do Rota Nova?
-              </h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Estamos selecionando investidores anjo, fundos de mobilidade e apoiadores estratégicos para acelerar a presença do Rota Nova em novas regiões do Brasil.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* PIX DIRECT SUPPORT & DONATION CARD */}
+            <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-amber-500/50 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 shadow-2xl space-y-6">
               
-              {/* Left Simulator Slider */}
-              <div className="lg:col-span-6 bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-6">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-amber-400" />
-                  Simulador de Aporte / Cotas
-                </h3>
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+                <div>
+                  <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold uppercase tracking-wider mb-2">
+                    <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Apoio Comunitário & Investimento Simbólico</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white">
+                    Apoie o Projeto Rota Nova via PIX Instantâneo
+                  </h2>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+                    Seja um apoiador direto da plataforma. Qualquer valor simbólico contribui para manutenção dos servidores, desenvolvimento de novos recursos e expansão para novas cidades.
+                  </p>
+                </div>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-400">Valor do Aporte Simulado:</span>
-                    <span className="text-2xl font-black text-amber-400">R$ {investmentAmount.toLocaleString('pt-BR')}</span>
+                <button
+                  onClick={() => setPixModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2 transition-all shrink-0"
+                >
+                  <QrCode className="w-4 h-4 text-amber-400" />
+                  <span>Expandir QR Code</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                {/* QR Code & Scan box */}
+                <div className="lg:col-span-4 flex flex-col items-center bg-slate-950/90 border border-slate-800 p-6 rounded-2xl space-y-4 text-center">
+                  <div className="relative p-3 bg-white rounded-2xl shadow-xl shadow-amber-500/10 border-2 border-amber-500/40 group">
+                    <img
+                      src={qrCodeImgUrl}
+                      alt="QR Code Pix C6 Bank"
+                      className="w-44 h-44 sm:w-48 sm:h-48 object-contain rounded-lg"
+                    />
+                    <div className="absolute inset-0 rounded-2xl bg-amber-500/10 pointer-events-none border border-amber-400/20" />
                   </div>
 
-                  <input
-                    type="range"
-                    min="5000"
-                    max="250000"
-                    step="5000"
-                    value={investmentAmount}
-                    onChange={(e) => setInvestmentAmount(Number(e.target.value))}
-                    className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                  />
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-amber-400 flex items-center justify-center gap-1.5">
+                      <QrCode className="w-4 h-4" />
+                      Aponte a câmera do seu banco
+                    </span>
+                    <p className="text-[11px] text-slate-400">
+                      QR Code C6 Bank sem valor fixo pré-definido
+                    </p>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-semibold">Retorno Anual Estimado (YoY)</span>
-                      <span className="text-base font-black text-emerald-400">R$ {parseFloat(projectedReturnYear).toLocaleString('pt-BR')}</span>
+                {/* Beneficiary Details & Actions */}
+                <div className="lg:col-span-8 space-y-5">
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                      <span className="text-slate-400 font-semibold block text-[11px]">Titular / Beneficiário</span>
+                      <strong className="text-white text-sm font-bold block">MAX LENNER DIOGO DE MORAIS</strong>
                     </div>
-                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-semibold">Projeção Mensal de Repasse</span>
-                      <span className="text-base font-black text-amber-400">R$ {parseFloat(monthlyYield).toLocaleString('pt-BR')}</span>
+
+                    <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                      <span className="text-slate-400 font-semibold block text-[11px]">CPF / Chave Pix</span>
+                      <strong className="text-amber-400 font-mono text-sm block">053.391.481-73</strong>
+                    </div>
+
+                    <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                      <span className="text-slate-400 font-semibold block text-[11px]">Instituição Financeira</span>
+                      <strong className="text-emerald-400 text-sm font-bold block">Banco C6 S.A.</strong>
+                    </div>
+                  </div>
+
+                  {/* Preset Suggestions */}
+                  <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Sugestões de Apoio Voluntário:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+                        <span className="text-amber-400 font-bold text-xs block">R$ 10</span>
+                        <span className="text-[10px] text-slate-400">Café dos Devs</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+                        <span className="text-amber-400 font-bold text-xs block">R$ 25</span>
+                        <span className="text-[10px] text-slate-400">1h Cloud Server</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+                        <span className="text-amber-400 font-bold text-xs block">R$ 50</span>
+                        <span className="text-[10px] text-slate-400">Expansão de Bairro</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+                        <span className="text-amber-400 font-bold text-xs block">Livre</span>
+                        <span className="text-[10px] text-slate-400">Qualquer Valor</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleCopyPixLink}
+                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-4 rounded-xl border border-slate-700 flex items-center justify-center space-x-2 transition-all text-xs"
+                    >
+                      {pixInlineCopied ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-400 font-bold">Link Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-amber-400" />
+                          <span>Copiar Link de Cobrança PIX</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href={pixUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 transition-all text-xs"
+                    >
+                      <span>Abrir Cobrança C6 PIX</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* INSTITUTIONAL INVESTMENT ROUNDS & SIMULATOR */}
+            <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-slate-800 space-y-8">
+              
+              <div className="max-w-3xl space-y-3">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400 bg-amber-500/20 px-3.5 py-1.5 rounded-full border border-amber-500/30">
+                  Rodadas de Aporte Institucional & Cotas
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-black text-white">
+                  Quer Fazer Parte da Expansão do Rota Nova?
+                </h2>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Estamos selecionando investidores anjo, fundos de mobilidade e apoiadores estratégicos para acelerar a presença do Rota Nova em novas regiões do Brasil.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                {/* Left Simulator Slider */}
+                <div className="lg:col-span-6 bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-6">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-amber-400" />
+                    Simulador de Aporte / Cotas
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-slate-400">Valor do Aporte Simulado:</span>
+                      <span className="text-2xl font-black text-amber-400">R$ {investmentAmount.toLocaleString('pt-BR')}</span>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="5000"
+                      max="250000"
+                      step="5000"
+                      value={investmentAmount}
+                      onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                      className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Retorno Anual Estimado (YoY)</span>
+                        <span className="text-base font-black text-emerald-400">R$ {parseFloat(projectedReturnYear).toLocaleString('pt-BR')}</span>
+                      </div>
+                      <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Projeção Mensal de Repasse</span>
+                        <span className="text-base font-black text-amber-400">R$ {parseFloat(monthlyYield).toLocaleString('pt-BR')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Contact Form */}
-              <div className="lg:col-span-6 space-y-4">
-                {!contactSubmitted ? (
-                  <form onSubmit={handleSimulateContact} className="space-y-4">
-                    <p className="text-xs font-bold text-slate-300">Falar Diretamente com a Diretoria do Rota Nova</p>
-                    <div>
-                      <textarea
-                        value={investorMessage}
-                        onChange={(e) => setInvestorMessage(e.target.value)}
-                        placeholder="Escreva sua mensagem ou proposta de apoio/investimento..."
-                        className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-xs text-white focus:outline-none focus:border-amber-500 h-28"
-                        required
-                      ></textarea>
+                {/* Right Contact Form */}
+                <div className="lg:col-span-6 space-y-4">
+                  {!contactSubmitted ? (
+                    <form onSubmit={handleSimulateContact} className="space-y-4">
+                      <p className="text-xs font-bold text-slate-300">Falar Diretamente com a Diretoria do Rota Nova</p>
+                      <div>
+                        <textarea
+                          value={investorMessage}
+                          onChange={(e) => setInvestorMessage(e.target.value)}
+                          placeholder="Escreva sua mensagem ou proposta de apoio/investimento..."
+                          className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-xs text-white focus:outline-none focus:border-amber-500 h-28"
+                          required
+                        ></textarea>
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center space-x-2"
+                      >
+                        <Send className="w-4 h-4" />
+                        <span>Enviar Mensagem & Solicitar Pitch Deck</span>
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="bg-emerald-950/60 border border-emerald-500/60 p-6 rounded-2xl text-center space-y-3 animate-fadeIn">
+                      <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+                      <h4 className="text-lg font-bold text-white">Mensagem Recebida com Sucesso!</h4>
+                      <p className="text-xs text-slate-300">
+                        Nossa equipe de relações com investidores entrará em contato com você em breve pelo e-mail registrado.
+                      </p>
                     </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center space-x-2"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Enviar Mensagem & Solicitar Pitch Deck</span>
-                    </button>
-                  </form>
-                ) : (
-                  <div className="bg-emerald-950/60 border border-emerald-500/60 p-6 rounded-2xl text-center space-y-3 animate-fadeIn">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                    <h4 className="text-lg font-bold text-white">Mensagem Recebida com Sucesso!</h4>
-                    <p className="text-xs text-slate-300">
-                      Nossa equipe de relações com investidores entrará em contato com você em breve pelo e-mail registrado.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
+
               </div>
 
             </div>
@@ -635,6 +861,14 @@ export default function Investidor() {
 
               <div className="space-y-3">
                 <button
+                  onClick={() => setPixModalOpen(true)}
+                  className="w-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold py-3.5 rounded-xl text-center text-sm transition-colors flex items-center justify-center space-x-2"
+                >
+                  <HeartHandshake className="w-4 h-4 text-amber-400" />
+                  <span>Apoiar Projeto via PIX Instantâneo</span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('metrics')}
                   className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white font-bold py-3.5 rounded-xl text-center text-sm transition-colors flex items-center justify-center space-x-2"
                 >
@@ -655,6 +889,11 @@ export default function Investidor() {
         )}
 
       </div>
+
+      <PixApoioModal
+        isOpen={pixModalOpen}
+        onClose={() => setPixModalOpen(false)}
+      />
     </div>
   );
 }

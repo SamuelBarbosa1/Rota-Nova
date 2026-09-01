@@ -293,8 +293,49 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'cliente', in
           </button>
         </form>
 
+        {/* QUICK 1-CLICK DEMO BUTTONS */}
+        <div className="pt-3 border-t border-slate-800/80 space-y-2 text-center">
+          <span className="text-[11px] font-bold text-slate-400 block">
+            ⚡ Ou entre com 1-Clique em Modo Demonstração:
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <button
+              type="button"
+              onClick={handleQuickDemoInvestor}
+              className="py-2.5 px-2 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/40 text-emerald-300 font-bold rounded-xl transition-all flex items-center justify-center gap-1"
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Investidor</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickDemoDriver}
+              className="py-2.5 px-2 bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 text-amber-300 font-bold rounded-xl transition-all flex items-center justify-center gap-1"
+            >
+              <Car className="w-3.5 h-3.5 text-amber-400" />
+              <span>Motorista</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickDemoClient}
+              className="py-2.5 px-2 bg-blue-950/60 hover:bg-blue-900/80 border border-blue-500/40 text-blue-300 font-bold rounded-xl transition-all flex items-center justify-center gap-1"
+            >
+              <User className="w-3.5 h-3.5 text-blue-400" />
+              <span>Passageiro</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickDemoAdmin}
+              className="py-2.5 px-2 bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 text-purple-300 font-bold rounded-xl transition-all flex items-center justify-center gap-1"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+              <span>Admin</span>
+            </button>
+          </div>
+        </div>
+
         {/* LINK TOGGLE LOGIN / REGISTER */}
-        <div className="text-center pt-2 border-t border-slate-800/80">
+        <div className="text-center pt-1 border-t border-slate-800/80">
           <button
             onClick={() => setIsRegister(!isRegister)}
             className="text-xs text-amber-400 hover:text-amber-300 font-bold underline transition-colors"
