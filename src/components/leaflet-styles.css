@@ -1,51 +1,77 @@
 /* Custom Leaflet Map Container Background */
 .leaflet-container {
   background-color: #020617 !important; /* slate-950 */
-  font-family: ui-sans-serif, system-ui, sans-serif !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  z-index: 1;
 }
 
+/* Clear tile pane - No artificial invert filters! Native high-res tile rendering */
 .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(95%);
+  filter: none !important;
 }
 
 /* Custom Zoom Control Styling */
-.leaflet-touch .leaflet-bar {
-  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+.leaflet-touch .leaflet-bar,
+.leaflet-bar {
+  border: 1px solid rgba(51, 65, 85, 0.7) !important;
   border-radius: 12px !important;
   overflow: hidden;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(8px);
 }
-.leaflet-touch .leaflet-bar a {
-  background-color: #0f172a !important; /* slate-900 */
+
+.leaflet-touch .leaflet-bar a,
+.leaflet-bar a {
+  background-color: rgba(15, 23, 42, 0.85) !important; /* slate-900 / 85% */
   color: #f59e0b !important; /* amber-500 */
   border: none !important;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5) !important;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
 }
-.leaflet-touch .leaflet-bar a:hover {
+
+.leaflet-touch .leaflet-bar a:last-child,
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+
+.leaflet-touch .leaflet-bar a:hover,
+.leaflet-bar a:hover {
   background-color: #1e293b !important; /* slate-800 */
   color: #fbbf24 !important; /* amber-400 */
+  transform: scale(1.04);
 }
-.leaflet-touch .leaflet-bar a.leaflet-disabled {
-  background-color: #0f172a !important;
+
+.leaflet-touch .leaflet-bar a.leaflet-disabled,
+.leaflet-bar a.leaflet-disabled {
+  background-color: rgba(15, 23, 42, 0.6) !important;
   color: #475569 !important; /* slate-600 */
 }
 
 /* Attribution custom dark style */
 .leaflet-container .leaflet-control-attribution {
   background: rgba(15, 23, 42, 0.85) !important;
-  color: #64748b !important; /* slate-500 */
-  font-size: 10px !important;
+  color: #94a3b8 !important; /* slate-400 */
+  font-size: 9px !important;
   border-top-left-radius: 8px;
-  backdrop-filter: blur(4px);
-  padding: 4px 8px !important;
+  backdrop-filter: blur(6px);
+  padding: 3px 8px !important;
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  border-right: none;
+  border-bottom: none;
 }
+
 .leaflet-container .leaflet-control-attribution a {
   color: #fbbf24 !important;
   text-decoration: none;
+  font-weight: 500;
 }
+
 .leaflet-container .leaflet-control-attribution a:hover {
   text-decoration: underline;
 }
@@ -58,10 +84,39 @@
   padding: 0 !important;
 }
 
+/* Route glowing line */
+.route-glowing-line {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.65));
+}
+
+.route-satellite-line {
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.9));
+}
+
 /* Leaflet pane overrides */
 .leaflet-pane {
   z-index: 1 !important;
 }
 .leaflet-top, .leaflet-bottom {
   z-index: 2 !important;
+}
+
+/* Pulse animation for car & pin */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

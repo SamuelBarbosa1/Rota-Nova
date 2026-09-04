@@ -5,9 +5,10 @@ import AuthModal from '../components/AuthModal';
 import { 
   Car, ShieldCheck, UserCheck, CheckCircle2, ArrowRight, MapPin, 
   Sparkles, ShieldAlert, Award, Star, ThumbsUp, Users, Compass, Lock,
-  Zap, Leaf, Heart, Crown, Package, Dog, DollarSign, TrendingUp
+  Zap, Leaf, Heart, Crown, Package, Dog, DollarSign, TrendingUp, Navigation
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 export default function Home() {
   const { currentUser } = useAuth();
@@ -17,6 +18,8 @@ export default function Home() {
 
   const [quickOrigin, setQuickOrigin] = useState("Eixo Monumental, Bloco A — Brasília, DF");
   const [quickDest, setQuickDest] = useState("Sol Nascente, Trecho 3 (Estrada de Terra) — DF");
+  const [quickOriginCoords, setQuickOriginCoords] = useState(null);
+  const [quickDestCoords, setQuickDestCoords] = useState(null);
   const [selectedViaCat, setSelectedViaCat] = useState('via_go');
   const [estimatedPrice, setEstimatedPrice] = useState(22.50);
   const [isCalculated, setIsCalculated] = useState(false);
@@ -211,30 +214,31 @@ export default function Home() {
                 <form onSubmit={handleQuickEstimate} className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 mb-1">Ponto de Embarque</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={quickOrigin}
-                        onChange={(e) => setQuickOrigin(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
-                        placeholder="Endereço de partida"
-                      />
-                      <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
-                    </div>
+                    <AddressAutocomplete
+                      value={quickOrigin}
+                      onChange={setQuickOrigin}
+                      onSelect={(addr, coords) => {
+                        setQuickOrigin(addr);
+                        if (coords) setQuickOriginCoords(coords);
+                      }}
+                      icon={MapPin}
+                      placeholder="Endereço de partida..."
+                      showGpsButton={true}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 mb-1">Ponto de Desembarque (Qualquer CEP)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={quickDest}
-                        onChange={(e) => setQuickDest(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
-                        placeholder="Endereço de destino"
-                      />
-                      <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
-                    </div>
+                    <AddressAutocomplete
+                      value={quickDest}
+                      onChange={setQuickDest}
+                      onSelect={(addr, coords) => {
+                        setQuickDest(addr);
+                        if (coords) setQuickDestCoords(coords);
+                      }}
+                      icon={Navigation}
+                      placeholder="Endereço de destino..."
+                    />
                   </div>
 
                   <div>
@@ -545,13 +549,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DEMO MAP */}
+      {/* RADAR MAP PREVIEW */}
       <section className="py-16 bg-slate-900/40 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Demonstração ao Vivo</span>
-              <h2 className="text-3xl font-black text-white">Visualizador do Radar Rota Nova</h2>
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Cobertura & Rastreamento</span>
+              <h2 className="text-3xl font-black text-white">Radar de Mobilidade em Tempo Real</h2>
             </div>
           </div>
           <InteractiveMap

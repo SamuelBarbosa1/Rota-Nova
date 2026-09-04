@@ -5,9 +5,10 @@ import {
   User, MapPin, Navigation, Car, ShieldCheck, Clock, CreditCard, 
   CheckCircle2, Star, Download, Sparkles, AlertCircle, History, Send, 
   TrendingUp, DollarSign, Heart, Bookmark, Plus, FileText, ArrowRight, Lock,
-  Zap, Leaf, Crown, Package, Dog, LogOut
+  Zap, Leaf, Crown, Package, Dog, LogOut, Crosshair
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 export default function Cliente() {
   const { currentUser, switchRole, addClientCompletedTrip, activeTab, setActiveTab, logout } = useAuth();
@@ -37,9 +38,14 @@ export default function Cliente() {
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Ride Request state
+  // Ride Request state with real coords & dynamic distance
   const [origin, setOrigin] = useState('Eixo Monumental, Bloco A — Brasília, DF');
   const [destination, setDestination] = useState('Sol Nascente, Trecho 3, Chácara 28 (Estrada de Chão) — DF');
+  const [originCoords, setOriginCoords] = useState(null);
+  const [destCoords, setDestCoords] = useState(null);
+  const [calculatedDistance, setCalculatedDistance] = useState('5.4');
+  const [calculatedEta, setCalculatedEta] = useState(7);
+
   const [selectedCategory, setSelectedCategory] = useState('via_go');
   const [paymentMethod, setPaymentMethod] = useState('pix');
 
@@ -64,14 +70,16 @@ export default function Cliente() {
     }
   }, [currentUser]);
 
+  // Dynamic VIA categories pricing based on actual real route distance
+  const numDist = parseFloat(calculatedDistance) || 5.4;
   const categories = [
     {
       id: 'via_go',
       name: 'VIA GO',
       tagline: 'Econômico inteligente',
       desc: 'Carros compactos e super econômicos para o dia a dia',
-      price: 22.50,
-      eta: '3 min',
+      price: Math.max(14.0, 7.50 + numDist * 2.50),
+      eta: `${Math.max(2, Math.round(numDist * 1.3))} min`,
       icon: Zap,
       badge: 'Econômico',
       badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30'
@@ -81,8 +89,8 @@ export default function Cliente() {
       name: 'VIA PLUS',
       tagline: 'Mais conforto',
       desc: 'Sedans e hatches espaçosos com ar-condicionado forte',
-      price: 29.90,
-      eta: '2 min',
+      price: Math.max(18.0, 9.50 + numDist * 3.30),
+      eta: `${Math.max(2, Math.round(numDist * 1.2))} min`,
       icon: Car,
       badge: 'Conforto',
       badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
@@ -92,8 +100,8 @@ export default function Cliente() {
       name: 'VIA ECO',
       tagline: 'Sustentável e tecnológico',
       desc: 'Veículos elétricos e híbridos de baixíssima emissão',
-      price: 32.50,
-      eta: '4 min',
+      price: Math.max(20.0, 10.50 + numDist * 3.60),
+      eta: `${Math.max(3, Math.round(numDist * 1.4))} min`,
       icon: Leaf,
       badge: 'Ecológico',
       badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
@@ -103,8 +111,8 @@ export default function Cliente() {
       name: 'VIA DELAS',
       tagline: 'Exclusiva',
       desc: 'Modalidade conduzida por motoristas mulheres parceiras',
-      price: 29.90,
-      eta: '3 min',
+      price: Math.max(18.0, 9.50 + numDist * 3.30),
+      eta: `${Math.max(2, Math.round(numDist * 1.2))} min`,
       icon: Heart,
       badge: 'Para Elas',
       badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/30'
@@ -114,8 +122,8 @@ export default function Cliente() {
       name: 'VIA BLACK',
       tagline: 'Executivo premium',
       desc: 'Carros executivos pretos com ar dual zone e condutores 5 estrelas',
-      price: 44.00,
-      eta: '4 min',
+      price: Math.max(28.0, 15.00 + numDist * 4.80),
+      eta: `${Math.max(3, Math.round(numDist * 1.3))} min`,
       icon: Crown,
       badge: 'Executivo',
       badgeBg: 'bg-slate-700/50 text-slate-200 border-slate-600'
@@ -125,8 +133,8 @@ export default function Cliente() {
       name: 'VIA PRIME',
       tagline: 'Luxo e experiência VIP',
       desc: 'Carros de alto luxo, água cortesia e atendimento VIP exclusivo',
-      price: 65.00,
-      eta: '5 min',
+      price: Math.max(45.0, 25.00 + numDist * 6.50),
+      eta: `${Math.max(4, Math.round(numDist * 1.4))} min`,
       icon: Sparkles,
       badge: 'VIP Luxo',
       badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
@@ -136,8 +144,8 @@ export default function Cliente() {
       name: 'VIA BOX',
       tagline: 'Mercado e entregas',
       desc: 'Transporte dedicado de compras de mercado, caixas e encomendas',
-      price: 21.00,
-      eta: '4 min',
+      price: Math.max(15.0, 8.00 + numDist * 2.40),
+      eta: `${Math.max(3, Math.round(numDist * 1.3))} min`,
       icon: Package,
       badge: 'Entregas',
       badgeBg: 'bg-amber-600/20 text-amber-400 border-amber-600/30'
@@ -147,8 +155,8 @@ export default function Cliente() {
       name: 'VIA PET',
       tagline: 'Mobilidade pet friendly',
       desc: 'Veículos preparados com mantas especiais para seu pet',
-      price: 34.50,
-      eta: '5 min',
+      price: Math.max(22.0, 11.00 + numDist * 3.80),
+      eta: `${Math.max(4, Math.round(numDist * 1.4))} min`,
       icon: Dog,
       badge: 'Pet Friendly',
       badgeBg: 'bg-teal-500/20 text-teal-300 border-teal-500/30'
@@ -238,47 +246,61 @@ export default function Cliente() {
     setRideStatus('idle');
   };
 
+  const handleStartTransit = () => {
+    clearAllTimeouts();
+    setRideStatus('in_transit');
+    
+    // Smooth realistic transit duration (35s) or user can click to complete immediately
+    transitTimeoutRef.current = setTimeout(() => {
+      handleCompleteRide();
+    }, 35000);
+  };
+
+  const handleCompleteRide = () => {
+    clearAllTimeouts();
+    setRideStatus('completed');
+    setShowRatingModal(true);
+
+    const priceVal = categories.find(c => c.id === selectedCategory)?.price || 24.50;
+    const newTrip = {
+      id: `ROT-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: 'Hoje, agora mesmo',
+      origin: origin,
+      destination: destination,
+      price: priceVal,
+      driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
+      category: categories.find(c => c.id === selectedCategory)?.name || 'VIA GO',
+      status: 'Concluída'
+    };
+    setTripHistory(prev => [newTrip, ...prev]);
+    if (addClientCompletedTrip) {
+      addClientCompletedTrip(newTrip);
+    }
+  };
+
   const handleRequestRide = (e) => {
     e.preventDefault();
     if (!origin || !destination) return;
 
-    // Clear any previous running simulation timers
     clearAllTimeouts();
-
     setRideStatus('searching');
 
-    // 1. Calculating/Finding driver: 4 seconds
+    // 1. Buscando motorista qualificado mais próximo (3.5 segundos)
     searchTimeoutRef.current = setTimeout(() => {
       setRideStatus('driver_en_route');
-    }, 4000);
 
-    // 2. Driver en route: 7 seconds (takes 4 + 7 = 11 seconds total)
-    routeTimeoutRef.current = setTimeout(() => {
-      setRideStatus('in_transit');
-    }, 11000);
+      // 2. Motorista se aproximando do passageiro (~14 segundos para chegar com calma)
+      routeTimeoutRef.current = setTimeout(() => {
+        setRideStatus('driver_arrived');
 
-    // 3. In transit simulation: 15 seconds (takes 11 + 15 = 26 seconds total)
-    transitTimeoutRef.current = setTimeout(() => {
-      setRideStatus('completed');
-      setShowRatingModal(true);
+        // 3. Motorista aguarda passageiro embarcar (auto inicia em 4.5s se não clicar antes)
+        transitTimeoutRef.current = setTimeout(() => {
+          handleStartTransit();
+        }, 4500);
 
-      const priceVal = categories.find(c => c.id === selectedCategory)?.price || 24.50;
-      const newTrip = {
-        id: `ROT-${Math.floor(1000 + Math.random() * 9000)}`,
-        date: 'Hoje, agora mesmo',
-        origin: origin,
-        destination: destination,
-        price: priceVal,
-        driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
-        category: categories.find(c => c.id === selectedCategory)?.name || 'VIA GO',
-        status: 'Concluída'
-      };
-      setTripHistory(prev => [newTrip, ...prev]);
-      if (addClientCompletedTrip) {
-        addClientCompletedTrip(newTrip);
-      }
+      }, 14000);
 
-    }, 26000);
+    }, 3500);
   };
 
   return (
@@ -373,7 +395,10 @@ export default function Cliente() {
                       <button
                         key={fav.id}
                         type="button"
-                        onClick={() => setDestination(fav.address)}
+                        onClick={() => {
+                          setDestination(fav.address);
+                          setDestCoords(null);
+                        }}
                         className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-medium text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         <MapPin className="w-3.5 h-3.5 text-amber-400" />
@@ -386,40 +411,49 @@ export default function Cliente() {
                 <form onSubmit={handleRequestRide} className="space-y-4">
                   
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1">Origem (Ponto de Embarque)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={origin}
-                        onChange={(e) => setOrigin(e.target.value)}
-                        disabled={rideStatus !== 'idle'}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
-                        required
-                      />
-                      <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-400">Origem (Ponto de Embarque)</label>
+                      <span className="text-[10px] text-amber-400/80 font-medium flex items-center gap-1">
+                        <Crosshair className="w-3 h-3" />
+                        <span>GPS / Busca Real</span>
+                      </span>
                     </div>
+                    <AddressAutocomplete
+                      value={origin}
+                      onChange={setOrigin}
+                      onSelect={(addr, coords) => {
+                        setOrigin(addr);
+                        if (coords) setOriginCoords(coords);
+                      }}
+                      icon={MapPin}
+                      placeholder="Buscar rua, quadra ou CEP de partida..."
+                      showGpsButton={true}
+                      disabled={rideStatus !== 'idle'}
+                      required
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 mb-1">Destino Final (Sem restrição de CEP)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        disabled={rideStatus !== 'idle'}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-amber-500"
-                        required
-                      />
-                      <Navigation className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
-                    </div>
+                    <AddressAutocomplete
+                      value={destination}
+                      onChange={setDestination}
+                      onSelect={(addr, coords) => {
+                        setDestination(addr);
+                        if (coords) setDestCoords(coords);
+                      }}
+                      icon={Navigation}
+                      placeholder="Para onde vamos? (Qualquer bairro, rua ou terra)"
+                      disabled={rideStatus !== 'idle'}
+                      required
+                    />
                   </div>
 
                   {/* Categories */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between">
                       <label className="block text-xs font-bold text-slate-300">Selecione a Modalidade VIA</label>
-                      <span className="text-[10px] text-amber-400 font-semibold">8 Opções Disponíveis</span>
+                      <span className="text-[10px] text-amber-400 font-semibold">{calculatedDistance} km • {calculatedEta} min</span>
                     </div>
                     <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
                       {categories.map((cat) => {
@@ -497,7 +531,7 @@ export default function Cliente() {
                     </div>
                   </div>
 
-                  {rideStatus === 'idle' ? (
+                  {rideStatus === 'idle' && (
                     <button
                       type="submit"
                       className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-xl shadow-xl shadow-amber-500/20 transition-all text-base flex items-center justify-center space-x-2"
@@ -505,13 +539,56 @@ export default function Cliente() {
                       <Send className="w-5 h-5" />
                       <span>Chamar Motorista Rota Nova</span>
                     </button>
-                  ) : (
+                  )}
+
+                  {rideStatus === 'driver_arrived' && (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleStartTransit}
+                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-xl shadow-xl shadow-emerald-500/20 transition-all text-sm flex items-center justify-center space-x-2 animate-pulse"
+                      >
+                        <Car className="w-4 h-4" />
+                        <span>Entrar no Carro & Iniciar Viagem</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelRide}
+                        className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold py-2.5 rounded-xl text-xs transition-colors"
+                      >
+                        Cancelar Corrida
+                      </button>
+                    </div>
+                  )}
+
+                  {rideStatus === 'in_transit' && (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleCompleteRide}
+                        className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow-xl shadow-amber-500/20 transition-all text-sm flex items-center justify-center space-x-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Concluir Viagem / Chegar ao Destino</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelRide}
+                        className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold py-2.5 rounded-xl text-xs transition-colors"
+                      >
+                        Cancelar Corrida
+                      </button>
+                    </div>
+                  )}
+
+                  {(rideStatus === 'searching' || rideStatus === 'driver_en_route') && (
                     <button
                       type="button"
                       onClick={handleCancelRide}
-                      className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold py-3 rounded-xl text-xs transition-colors"
+                      className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold py-3.5 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5"
                     >
-                      Cancelar Solicitação
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Cancelar Solicitação</span>
                     </button>
                   )}
 
@@ -525,11 +602,17 @@ export default function Cliente() {
               <InteractiveMap
                 origin={origin}
                 destination={destination}
+                originCoords={originCoords}
+                destCoords={destCoords}
                 status={rideStatus}
                 driverName="Carlos Eduardo (Nota 4.98)"
                 vehicle="Toyota Corolla • Placa ABC-1D23"
-                etaMinutes={5}
-                distanceKm="5.4"
+                etaMinutes={calculatedEta}
+                distanceKm={calculatedDistance}
+                onRouteChange={({ distanceKm: dist, etaMinutes: eta, originCoords: origC, destCoords: destC }) => {
+                  setCalculatedDistance(dist);
+                  setCalculatedEta(eta);
+                }}
               />
 
               <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex items-center justify-between">
