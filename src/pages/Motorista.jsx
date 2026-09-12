@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import InteractiveMap from '../components/InteractiveMap';
+import { RideService, FinanceService } from '../services/api';
 import { 
   Car, ShieldCheck, CheckCircle2, AlertTriangle, HelpCircle, 
   ArrowRight, Award, DollarSign, Activity, FileCheck, Phone, Mail, 
@@ -11,6 +12,10 @@ import {
 export default function Motorista() {
   const { currentUser, completeInterview, completeDriverTrip, activeTab, setActiveTab, logout } = useAuth();
   const isInterviewPassed = !!currentUser?.driverData?.interviewPassed;
+
+  const driverName = currentUser?.name || 'Roberto Barbosa';
+  const carModel = currentUser?.driverData?.carModel || 'Toyota Etios Sedan 1.5';
+  const carPlate = currentUser?.driverData?.carPlate || 'ABC-5E67';
 
   // Validate activeTab on mount or role switch
   useEffect(() => {
@@ -27,6 +32,61 @@ export default function Motorista() {
   const [activeCall, setActiveCall] = useState(null);
   const [acceptedRide, setAcceptedRide] = useState(null);
 
+  // Supabase Realtime + Polling: Monitorar radar de corridas quando online
+  useEffect(() => {
+    if (!isOnline) return;
+
+    const checkRadar = () => {
+      RideService.getActiveRadarCalls().then(res => {
+        if (res?.activeCalls?.length > 0) {
+          const realCall = res.activeCalls.find(c => c.rawRide);
+          if (realCall) {
+            setActiveCall(prev => {
+              if (prev || acceptedRide) return prev;
+              return {
+                id: realCall.id,
+                pickup: realCall.pickup,
+                dropoff: realCall.dropoff,
+                distance: realCall.distance,
+                price: realCall.price,
+                category: realCall.category,
+                passenger: realCall.clientName,
+                clientRating: realCall.clientRating,
+                rawRide: realCall.rawRide
+              };
+            });
+          }
+        }
+      });
+    };
+
+    checkRadar();
+    const interval = setInterval(checkRadar, 4000);
+
+    // Inscrever-se para novas corridas instantaneamente via Realtime
+    const unsubscribe = RideService.subscribeToRadar((newCall) => {
+      setActiveCall(prev => {
+        if (prev || acceptedRide) return prev;
+        return {
+          id: newCall.id,
+          pickup: newCall.pickup,
+          dropoff: newCall.dropoff,
+          distance: newCall.distance,
+          price: newCall.price,
+          category: newCall.category,
+          passenger: newCall.clientName,
+          clientRating: newCall.clientRating,
+          rawRide: newCall.rawRide
+        };
+      });
+    });
+
+    return () => {
+      clearInterval(interval);
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isOnline, acceptedRide]);
+
   const handleToggleOnline = () => {
     if (!isInterviewPassed) {
       setActiveTab('entrevista');
@@ -35,8 +95,80 @@ export default function Motorista() {
     setIsOnline(prev => !prev);
   };
 
-  const handleFinishRide = () => {
+  const simulateIncomingCall = () => {
+    const mockViaCalls = [
+      {
+        id: 'CALL-902',
+        pickup: 'Setor de Indústrias Gráficas (SIG), Quadra 1 — Brasília, DF',
+        dropoff: 'Colônia Agrícola 26 de Julho, Chácara 80 (Estrada de Terra) — DF',
+        price: 'R$ 38,40',
+        distance: '8.2 km',
+        passenger: 'Carlos M.',
+        category: 'VIA PLUS (Mais conforto)'
+      },
+      {
+        id: 'CALL-905',
+        pickup: 'Rodoviária do Plano Piloto — Brasília, DF',
+        dropoff: 'Sol Nascente, Trecho 3, Chácara 28 — DF',
+        price: 'R$ 24,50',
+        distance: '14.5 km',
+        passenger: 'Juliana S.',
+        category: 'VIA GO (Econômico inteligente)'
+      },
+      {
+        id: 'CALL-912',
+        pickup: 'Taguatinga Shopping — DF',
+        dropoff: 'Vicente Pires, Rua 4C (Rua de Terra)',
+        price: 'R$ 49,00',
+        distance: '10.1 km',
+        passenger: 'Mariana T. & Rex (Pet)',
+        category: 'VIA PET (Mobilidade pet friendly)'
+      },
+      {
+        id: 'CALL-918',
+        pickup: 'Setor Hoteleiro Norte — Brasília, DF',
+        dropoff: 'Aeroporto Internacional JK — DF',
+        price: 'R$ 68,00',
+        distance: '16.0 km',
+        passenger: 'Dr. Fernando A.',
+        category: 'VIA BLACK (Executivo premium)'
+      },
+      {
+        id: 'CALL-922',
+        pickup: 'Supermercado Carrefour — Taguatinga Sul',
+        dropoff: 'Ceilândia Norte, QNN 18',
+        price: 'R$ 28,00',
+        distance: '6.4 km',
+        passenger: 'Beatriz L. (Compras de Mercado)',
+        category: 'VIA BOX (Mercado e entregas)'
+      }
+    ];
+
+    const randomCall = mockViaCalls[Math.floor(Math.random() * mockViaCalls.length)];
+    setActiveCall(randomCall);
+  };
+
+  const handleAcceptRideCall = async () => {
+    if (!activeCall) return;
+    const rideToAccept = activeCall;
+    setActiveCall(null);
+    setAcceptedRide(rideToAccept);
+
+    await RideService.acceptRide(
+      rideToAccept.id,
+      currentUser?.id || 'drv_roberto',
+      { driverName, carModel }
+    );
+  };
+
+  const handleFinishRide = async () => {
     if (acceptedRide) {
+      await RideService.completeRide(acceptedRide.id, {
+        driverId: currentUser?.id || 'drv_roberto',
+        finalPrice: acceptedRide.price,
+        rating: 5,
+        comment: 'Viagem finalizada com excelência'
+      });
       if (completeDriverTrip) {
         completeDriverTrip(acceptedRide);
       }
@@ -189,68 +321,6 @@ export default function Motorista() {
       </div>
     );
   }
-
-  const driverName = currentUser?.name || 'Motorista';
-  const carModel = currentUser?.driverData?.carModel || 'Veículo Registrado';
-  const carPlate = currentUser?.driverData?.carPlate || 'JKL-0000';
-
-  const simulateIncomingCall = () => {
-    const mockViaCalls = [
-      {
-        id: 'CALL-902',
-        pickup: 'Setor de Indústrias Gráficas (SIG), Quadra 1 — Brasília, DF',
-        dropoff: 'Colônia Agrícola 26 de Julho, Chácara 80 (Estrada de Terra) — DF',
-        price: 'R$ 38,40',
-        distance: '8.2 km',
-        passenger: 'Carlos M.',
-        category: 'VIA PLUS (Mais conforto)'
-      },
-      {
-        id: 'CALL-905',
-        pickup: 'Rodoviária do Plano Piloto — Brasília, DF',
-        dropoff: 'Sol Nascente, Trecho 3, Chácara 28 — DF',
-        price: 'R$ 24,50',
-        distance: '14.5 km',
-        passenger: 'Juliana S.',
-        category: 'VIA GO (Econômico inteligente)'
-      },
-      {
-        id: 'CALL-912',
-        pickup: 'Taguatinga Shopping — DF',
-        dropoff: 'Vicente Pires, Rua 4C (Rua de Terra)',
-        price: 'R$ 49,00',
-        distance: '10.1 km',
-        passenger: 'Mariana T. & Rex (Pet)',
-        category: 'VIA PET (Mobilidade pet friendly)'
-      },
-      {
-        id: 'CALL-918',
-        pickup: 'Setor Hoteleiro Norte — Brasília, DF',
-        dropoff: 'Aeroporto Internacional JK — DF',
-        price: 'R$ 68,00',
-        distance: '16.0 km',
-        passenger: 'Dr. Fernando A.',
-        category: 'VIA BLACK (Executivo premium)'
-      },
-      {
-        id: 'CALL-922',
-        pickup: 'Supermercado Carrefour — Taguatinga Sul',
-        dropoff: 'Ceilândia Norte, QNN 18',
-        price: 'R$ 28,00',
-        distance: '6.4 km',
-        passenger: 'Beatriz L. (Compras de Mercado)',
-        category: 'VIA BOX (Mercado e entregas)'
-      }
-    ];
-
-    const randomCall = mockViaCalls[Math.floor(Math.random() * mockViaCalls.length)];
-    setActiveCall(randomCall);
-  };
-
-  const handleAcceptRideCall = () => {
-    setAcceptedRide(activeCall);
-    setActiveCall(null);
-  };
 
   const handleExceptionSubmit = (e) => {
     e.preventDefault();

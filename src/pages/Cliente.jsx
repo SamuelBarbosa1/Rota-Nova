@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import InteractiveMap from '../components/InteractiveMap';
 import AddressAutocomplete from '../components/AddressAutocomplete';
+import { RideService } from '../services/api';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 export default function Cliente() {
   const { currentUser, switchRole, addClientCompletedTrip, activeTab, setActiveTab, logout } = useAuth();
@@ -17,6 +19,12 @@ export default function Cliente() {
   const searchTimeoutRef = useRef(null);
   const routeTimeoutRef = useRef(null);
   const transitTimeoutRef = useRef(null);
+  const unsubscribeRideRef = useRef(null);
+  const [activeRideId, setActiveRideId] = useState(null);
+  const [assignedDriver, setAssignedDriver] = useState({
+    name: "Motorista Parceiro Rota Nova",
+    vehicle: "Carro Cadastrado"
+  });
 
   const clearAllTimeouts = () => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -243,12 +251,23 @@ export default function Cliente() {
 
   const handleCancelRide = () => {
     clearAllTimeouts();
+    if (activeRideId) {
+      RideService.cancelRide(activeRideId);
+      setActiveRideId(null);
+    }
+    if (unsubscribeRideRef.current) {
+      unsubscribeRideRef.current();
+      unsubscribeRideRef.current = null;
+    }
     setRideStatus('idle');
   };
 
   const handleStartTransit = () => {
     clearAllTimeouts();
     setRideStatus('in_transit');
+    if (activeRideId) {
+      RideService.updateRideStatus(activeRideId, 'in_transit');
+    }
     
     // Smooth realistic transit duration (35s) or user can click to complete immediately
     transitTimeoutRef.current = setTimeout(() => {
@@ -263,12 +282,12 @@ export default function Cliente() {
 
     const priceVal = categories.find(c => c.id === selectedCategory)?.price || 24.50;
     const newTrip = {
-      id: `ROT-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: activeRideId || `ROT-${Math.floor(1000 + Math.random() * 9000)}`,
       date: 'Hoje, agora mesmo',
       origin: origin,
       destination: destination,
       price: priceVal,
-      driver: 'Carlos Eduardo (Toyota Corolla - ABC-1D23)',
+      driver: `${assignedDriver.name} (${assignedDriver.vehicle})`,
       category: categories.find(c => c.id === selectedCategory)?.name || 'VIA GO',
       status: 'Concluída'
     };
@@ -276,31 +295,98 @@ export default function Cliente() {
     if (addClientCompletedTrip) {
       addClientCompletedTrip(newTrip);
     }
+    if (activeRideId) {
+      RideService.completeRide(activeRideId, {
+        driverId: 'drv_roberto',
+        finalPrice: priceVal,
+        rating: 5,
+        comment: 'Corrida finalizada com sucesso'
+      });
+      setActiveRideId(null);
+    }
+    if (unsubscribeRideRef.current) {
+      unsubscribeRideRef.current();
+      unsubscribeRideRef.current = null;
+    }
   };
 
-  const handleRequestRide = (e) => {
+  const handleSimulateDriverAccept = () => {
+    clearAllTimeouts();
+    setAssignedDriver({
+      name: "Motorista Parceiro Demonstrativo (Nota 4.99)",
+      vehicle: "Toyota Etios Sedan • Placa RTA-2026"
+    });
+    setRideStatus('driver_en_route');
+
+    routeTimeoutRef.current = setTimeout(() => {
+      setRideStatus('driver_arrived');
+      transitTimeoutRef.current = setTimeout(() => {
+        handleStartTransit();
+      }, 4500);
+    }, 12000);
+  };
+
+  const handleRequestRide = async (e) => {
     e.preventDefault();
     if (!origin || !destination) return;
 
     clearAllTimeouts();
     setRideStatus('searching');
 
-    // 1. Buscando motorista qualificado mais próximo (3.5 segundos)
-    searchTimeoutRef.current = setTimeout(() => {
-      setRideStatus('driver_en_route');
+    const activeCat = categories.find(c => c.id === selectedCategory);
+    const priceVal = activeCat?.price || 24.50;
 
-      // 2. Motorista se aproximando do passageiro (~14 segundos para chegar com calma)
-      routeTimeoutRef.current = setTimeout(() => {
-        setRideStatus('driver_arrived');
+    // Salvar corrida real no Supabase
+    try {
+      const res = await RideService.requestRide({
+        clientId: currentUser?.id,
+        clientName: currentUser?.name || 'Passageiro Rota Nova',
+        clientPhone: currentUser?.phone,
+        origin: { address: origin, lat: originCoords?.lat, lng: originCoords?.lng },
+        destination: { address: destination, lat: destCoords?.lat, lng: destCoords?.lng },
+        category: selectedCategory,
+        categoryName: activeCat?.name || 'VIA GO',
+        price: priceVal,
+        distanceKm: calculatedDistance,
+        durationMinutes: calculatedEta,
+        paymentMethod
+      });
 
-        // 3. Motorista aguarda passageiro embarcar (auto inicia em 4.5s se não clicar antes)
-        transitTimeoutRef.current = setTimeout(() => {
-          handleStartTransit();
-        }, 4500);
+      if (res?.rideId) {
+        setActiveRideId(res.rideId);
+        
+        // Ouvir em tempo real se um motorista aceitar esta corrida no Supabase
+        const unsub = RideService.subscribeToRide(res.rideId, async (updated) => {
+          if (updated.status === 'driver_en_route') {
+            clearAllTimeouts();
+            // Buscar dados reais do motorista que aceitou
+            if (updated.driver_id && isSupabaseConfigured && supabase) {
+              const { data: drv } = await supabase
+                .from('driver_profiles')
+                .select('*, users(name)')
+                .eq('id', updated.driver_id)
+                .maybeSingle();
 
-      }, 14000);
-
-    }, 3500);
+              if (drv) {
+                setAssignedDriver({
+                  name: `${drv.users?.name || 'Motorista Parceiro'} (Nota ${Number(drv.rating || 5).toFixed(2)})`,
+                  vehicle: `${drv.car_model || 'Veículo'} • Placa ${drv.car_plate || ''}`
+                });
+              }
+            }
+            setRideStatus('driver_en_route');
+          } else if (updated.status === 'in_transit') {
+            clearAllTimeouts();
+            setRideStatus('in_transit');
+          } else if (updated.status === 'completed') {
+            handleCompleteRide();
+          }
+        });
+        unsubscribeRideRef.current = unsub;
+      }
+    } catch (err) {
+      console.error('Erro ao chamar RideService.requestRide:', err);
+    }
   };
 
   return (
@@ -581,6 +667,27 @@ export default function Cliente() {
                     </div>
                   )}
 
+                  {rideStatus === 'searching' && (
+                    <div className="space-y-3">
+                      <div className="p-4 bg-slate-900/90 border border-amber-500/40 rounded-2xl space-y-2 text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Aguardando no Radar</span>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          Sua chamada está ativa no banco de dados e aguardando um motorista aceitar no Cockpit!
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSimulateDriverAccept}
+                        className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors"
+                      >
+                        ⚡ Simular Motorista Aceitando (Teste Rápido)
+                      </button>
+                    </div>
+                  )}
+
                   {(rideStatus === 'searching' || rideStatus === 'driver_en_route') && (
                     <button
                       type="button"
@@ -605,8 +712,8 @@ export default function Cliente() {
                 originCoords={originCoords}
                 destCoords={destCoords}
                 status={rideStatus}
-                driverName="Carlos Eduardo (Nota 4.98)"
-                vehicle="Toyota Corolla • Placa ABC-1D23"
+                driverName={assignedDriver.name}
+                vehicle={assignedDriver.vehicle}
                 etaMinutes={calculatedEta}
                 distanceKm={calculatedDistance}
                 onRouteChange={({ distanceKm: dist, etaMinutes: eta, originCoords: origC, destCoords: destC }) => {
